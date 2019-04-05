@@ -30,7 +30,7 @@ class DQN(nn.Module):
     def act(self, state, epsilon):
         with torch.no_grad():
             if random.random() > epsilon:
-                state   = Variable(torch.FloatTensor(state).unsqueeze(0)) #change this
+                state   = torch.FloatTensor(state).unsqueeze(0) #change this
                 q_value = self.forward(state)
                 action  = q_value.max(1)[1].item()
             else:
@@ -40,14 +40,15 @@ class DQN(nn.Module):
 
 class CnnDQN(nn.Module):
 
-    def __init__(self, inp_channel, out_channel):
+    def __init__(self, inp_shape, out_channel, device):
         super(CnnDQN, self).__init__()
         
-        self.inp_channel = inp_channel
+        self.inp_shape = inp_shape
         self.out_channel = out_channel
+        self.device = device
         
         self.features = nn.Sequential(
-            nn.Conv2d(inp_channel, 32, kernel_size=8, stride=4),
+            nn.Conv2d(self.inp_shape[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -68,14 +69,14 @@ class CnnDQN(nn.Module):
         return x
     
     def feature_size(self):
-        return self.features(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1) #change this
+        return self.features(torch.zeros(1, *self.inp_shape).to(self.device)).view(1, -1).size(1) #change this
     
     def act(self, state, epsilon):
 
         with torch.no_grad():
             if random.random() > epsilon:
-                state   = Variable(torch.FloatTensor(np.float32(state)).unsqueeze(0)) #change this
-                q_value = self.forward(state)
+                state   = torch.FloatTensor(np.float32(state)).unsqueeze(0) #change this
+                q_value = self.forward(state.to(self.device))
                 action  = q_value.max(1)[1].item()
             else:
                 action = random.randrange(self.out_channel)

@@ -1,4 +1,4 @@
 
 #!/usr/bin/env bash
 PYTHONPATH=.
-PYTHONPATH=${PYTHONPATH} python ./main.py "$@"
+PYTHONPATH=${PYTHONPATH} python main.py "$@"

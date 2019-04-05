@@ -1,7 +1,6 @@
 import math
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 
 import gym
 import torch
@@ -22,7 +21,7 @@ Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if 
 
 class Double:
 
-    def __init__(self, args, env, device):
+    def __init__(self, args, env, device, experiment):
         self.args = args
         self.env_type = args.env_type
         self.env = env
@@ -35,20 +34,21 @@ class Double:
         self.plot_idx = args.plot_idx
         self.target_idx = args.target_idx
         self.device = device
-        self.replay_buffer = ReplayBuffer(args.buff_size)
+        self.replay_buffer = ReplayBuffer(args.replay_buff)
+        self.experiment =  experiment
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
             self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
         elif args.env_type == "atari":
-            self.current_model = CnnDQN(self.env.observation_space.shape[0], self.env.action_space.n)
-            self.target_model  = CnnDQN(self.env.observation_space.shape[0], self.env.action_space.n)
+            self.current_model = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
+            self.target_model  = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
         if device != "cpu":
             self.current_model = self.current_model.to(self.device)
             self.target_model = self.target_model.to(self.device)
-        if args.optim == 'Adam':
-            self.optimizer = optim.Adam(self.current_model.parameters(), lr=args.lr)
+        if args.optim == 'adam':
+            self.optimizer = optim.Adam(self.current_model.parameters(), lr=self.args.lr)
         elif args.optim =='rmsprop':
-            self.optimizer = optim.RMSprop(self.current_model.parameters(), lr=args.lr)
+            self.optimizer = optim.RMSprop(self.current_model.parameters(), lr=self.args.lr)
 
 
     def update_target(self):
@@ -86,16 +86,16 @@ class Double:
                 
             if len(self.replay_buffer) > self.batch_size:
                 loss = self.compute_td_loss() #
-                losses.append(loss.item())
-                
+                losses.append(loss.item()) 
+                self.experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
+                self.experiment.log_metric("loss", loss, step=frame_idx)               
+ 
             if frame_idx % self.plot_idx == 0:
                 plot(frame_idx, all_rewards, losses, self.args.log_dir) #
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
 
-            experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
-            experiment.log_metric("loss", loss, step=frame_idx)
             
 
     def compute_td_loss(self):
@@ -108,15 +108,15 @@ class Double:
         reward     = torch.FloatTensor(reward).to(self.device) #
         done       = torch.FloatTensor(done).to(self.device) #
 
-        q_values      = current_model(state) #
-        next_q_values = current_model(next_state) #
-        next_q_state_values = target_model(next_state)  
+        q_values = self.current_model(state) #
+        next_q_values = self.current_model(next_state) #
+        next_q_state_values = self.target_model(next_state)  
 
         q_value       = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  #
         next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) #
-        expected_q_value = reward + gamma * next_q_value * (1 - done)
+        expected_q_value = reward + self.gamma * next_q_value * (1 - done)
         
-        loss = (q_value - Variable(expected_q_value.data)).pow(2).mean() #
+        loss = (q_value - torch.tensor(expected_q_value.data).to(self.device)).pow(2).mean() #
             
         self.optimizer.zero_grad()
         loss.backward()

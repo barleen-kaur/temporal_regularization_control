@@ -13,7 +13,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from common.wrappers import make_atari, wrap_deepmind, wrap_pytorch
-
+from arguments import get_args
+from algo.double import Double
 
 args = get_args()
 
@@ -39,8 +40,7 @@ if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
 
 
 #figure out directory stuff
-try:
-    os.makedirs(os.path.join(path, args.log_dir), exist_ok=True) #change this
+os.makedirs(os.path.join(path, args.log_dir), exist_ok=True) #change this
 
 
 #########################################################################################################
@@ -64,15 +64,15 @@ def _main():
 
 
     if args.algo == 'dqn':
-        continue
+        pass
 
     elif args.algo == 'double':
-        _env = _env_set(args.env_name, arg.env_type)
-        alg = algo.DOUBLE(args, _env, device)
+        _env = _env_set(args.env_name, args.env_type)
+        alg = Double(args, _env, device, experiment)
         alg.epsilon_plot()
         alg.train()
     
 
 
 if __name__ == "__main__":
-    main()
+    _main()
