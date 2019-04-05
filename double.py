@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
 from models.model import DQN, CnnDQN
 from utils.replay import ReplayBuffer
-from utils.loss_plotter import plot
+from utils.loss_plotter import plot, eps_plot
 
 
 
@@ -23,6 +23,7 @@ Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if 
 class Double:
 
     def __init__(self, args, env, device):
+        self.args = args
         self.env_type = args.env_type
         self.env = env
         self.eps_s = args.eps_s
@@ -33,6 +34,7 @@ class Double:
         self.gamma = args.gamma
         self.plot_idx = args.plot_idx
         self.target_idx = args.target_idx
+        self.device = device
         self.replay_buffer = ReplayBuffer(args.buff_size)
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -41,8 +43,8 @@ class Double:
             self.current_model = CnnDQN(self.env.observation_space.shape[0], self.env.action_space.n)
             self.target_model  = CnnDQN(self.env.observation_space.shape[0], self.env.action_space.n)
         if device != "cpu":
-            self.current_model = self.current_model.cuda()
-            self.target_model = self.target_model.cuda()
+            self.current_model = self.current_model.to(self.device)
+            self.target_model = self.target_model.to(self.device)
         if args.optim == 'Adam':
             self.optimizer = optim.Adam(self.current_model.parameters(), lr=args.lr)
         elif args.optim =='rmsprop':
@@ -87,21 +89,24 @@ class Double:
                 losses.append(loss.item())
                 
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses) #
+                plot(frame_idx, all_rewards, losses, self.args.log_dir) #
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
 
+            experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
+            experiment.log_metric("loss", loss, step=frame_idx)
+            
 
     def compute_td_loss(self):
 
         state, action, reward, next_state, done = self.replay_buffer.sample(self.batch_size) #
 
-        state      = Variable(torch.FloatTensor(np.float32(state))) #
-        next_state = Variable(torch.FloatTensor(np.float32(next_state))) #
-        action     = Variable(torch.LongTensor(action)) #
-        reward     = Variable(torch.FloatTensor(reward)) #
-        done       = Variable(torch.FloatTensor(done)) #
+        state      = torch.FloatTensor(np.float32(state)).to(self.device) #
+        next_state = torch.FloatTensor(np.float32(next_state)).to(self.device) #
+        action     = torch.LongTensor(action).to(self.device) #
+        reward     = torch.FloatTensor(reward).to(self.device) #
+        done       = torch.FloatTensor(done).to(self.device) #
 
         q_values      = current_model(state) #
         next_q_values = current_model(next_state) #
@@ -119,10 +124,11 @@ class Double:
         
         return loss
 
+    def epsilon_plot(self):
+        eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
+        eps_plot(eps_list, self.args.log_dir)
 
 
-
-plt.plot([epsilon_by_frame(i) for i in range(10000)])
 
     
 

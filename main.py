@@ -30,8 +30,6 @@ else:
 
 experiment.log_parameters(vars(args))
 
-num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes #change this
-
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
 
@@ -43,9 +41,6 @@ if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
 #figure out directory stuff
 try:
     os.makedirs(os.path.join(path, args.log_dir), exist_ok=True) #change this
-    eval_log_dir = args.log_dir + "_eval"
-    os.makedirs(eval_log_dir)
-
 
 
 #########################################################################################################
@@ -64,21 +59,18 @@ def _env_set(env_name, env_type):
 
 def _main():
     
-    torch.set_num_threads(1). #what's this?
-    device = torch.device("cuda:0" if args.cuda else "cpu")
+    torch.set_num_threads(1) #what's this?
+    device = torch.device("cuda:1" if args.cuda else "cpu")
 
 
     if args.algo == 'dqn':
-        agent = algo.DQN(actor_critic, args.value_loss_coef,
-                               args.entropy_coef, lr=args.lr,
-                               lr_beta=args.lr_beta, reg_beta=args.reg_beta,
-                               delib_center=args.delib_center,
-                               eps=args.eps, alpha=args.alpha,
-                               max_grad_norm=args.max_grad_norm)
+        continue
 
     elif args.algo == 'double':
         _env = _env_set(args.env_name, arg.env_type)
-        agent = algo.DOUBLE(args, _env, device)
+        alg = algo.DOUBLE(args, _env, device)
+        alg.epsilon_plot()
+        alg.train()
     
 
 
