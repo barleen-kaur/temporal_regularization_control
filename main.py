@@ -18,7 +18,6 @@ from algo.double import Double
 
 args = get_args()
 
-path = ""
 
 assert args.algo in ['dqn', 'double']
 
@@ -38,9 +37,6 @@ if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
-
-#figure out directory stuff
-os.makedirs(os.path.join(path, args.log_dir), exist_ok=True) #change this
 
 
 #########################################################################################################
@@ -67,8 +63,11 @@ def _main():
         pass
 
     elif args.algo == 'double':
+        #figure out directory stuff
+        _dir = os.path.join(args.log_dir, "double")
+        os.makedirs(_dir, exist_ok=True) #change this
         _env = _env_set(args.env_name, args.env_type)
-        alg = Double(args, _env, device, experiment)
+        alg = Double(args, _env, device, experiment, _dir)
         alg.epsilon_plot()
         alg.train()
     

@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('--num_frames', type=int, default=1400000, help='number of frames (default: 1400000)')
     parser.add_argument('--comet', type=str, default="online")
     parser.add_argument('--disable_log', type=bool, default=False, help='set it to True to disable comet logging')
-    parser.add_argument('--log_dir', default='/tmp/gym/', help='directory to save agent logs (default: /tmp/gym)')
+    parser.add_argument('--log_dir', default='/usr/local/data/barleenk/python-environments/python3/temporal_regularization_control/', help='directory to save agent logs (default: /tmp/gym)')
  
     args = parser.parse_args()
 

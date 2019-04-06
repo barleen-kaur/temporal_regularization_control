@@ -69,7 +69,7 @@ class CnnDQN(nn.Module):
         return x
     
     def feature_size(self):
-        return self.features(torch.zeros(1, *self.inp_shape).to(self.device)).view(1, -1).size(1) #change this
+        return self.features(torch.zeros(1, *self.inp_shape)).view(1, -1).size(1) #change this
     
     def act(self, state, epsilon):
 

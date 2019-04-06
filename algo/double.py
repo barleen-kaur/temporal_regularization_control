@@ -21,7 +21,7 @@ Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if 
 
 class Double:
 
-    def __init__(self, args, env, device, experiment):
+    def __init__(self, args, env, device, experiment, _dir):
         self.args = args
         self.env_type = args.env_type
         self.env = env
@@ -36,6 +36,7 @@ class Double:
         self.device = device
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
+        self.log_dir = _dir
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
             self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -91,7 +92,7 @@ class Double:
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
  
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.args.log_dir) #
+                plot(frame_idx, all_rewards, losses, self.log_dir) #
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
@@ -107,16 +108,20 @@ class Double:
         action     = torch.LongTensor(action).to(self.device) #
         reward     = torch.FloatTensor(reward).to(self.device) #
         done       = torch.FloatTensor(done).to(self.device) #
+        #print("action: {}, shape:{}".format(action, action.shape))
+        #print("done: {}, shape:{}".format(done, done.shape))
 
         q_values = self.current_model(state) #
         next_q_values = self.current_model(next_state) #
-        next_q_state_values = self.target_model(next_state)  
-
-        q_value       = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  #
+        next_q_state_values = self.target_model(next_state) 
+        #print("q_values :{}, shape: {}".format(q_values, q_values.shape)) 
+        q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  #
+        #print("q_value :{}, shape: {}".format(q_value, q_value.shape))
         next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) #
+        #print("next_q_value :{}, shape: {}".format(next_q_value, next_q_value.shape))
         expected_q_value = reward + self.gamma * next_q_value * (1 - done)
-        
-        loss = (q_value - torch.tensor(expected_q_value.data).to(self.device)).pow(2).mean() #
+        #print("expected_q_value: {}, shape: {}".format(expected_q_value, expected_q_value.shape))
+        loss = (q_value - expected_q_value).pow(2).mean() #
             
         self.optimizer.zero_grad()
         loss.backward()
@@ -126,7 +131,7 @@ class Double:
 
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
-        eps_plot(eps_list, self.args.log_dir)
+        eps_plot(eps_list, self.log_dir)
 
 
 
