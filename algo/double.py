@@ -36,7 +36,7 @@ class Double:
         self.log_dir = _dir
         self.env_name = args.env_name.partition("NoFrameskip")
         self.start_frame = args.start_frame
-        self.logger = Logger(mylog_path=args.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
+        self.logger = Logger(mylog_path=self.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
         
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -90,11 +90,12 @@ class Double:
             
             if done:
                 no_of_episodes += 1
+                print("No of episodes ended: {}".format(no_of_episodes))
                 state = self.env.reset()
                 all_rewards.append(episode_reward)
                 episode_reward = 0
                 self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
-                self.logger.to_csv(np.concatenate((all_rewards[-1], frame_idx)), no_of_episodes)
+                self.logger.to_csv(np.concatenate((frame_idx, all_rewards[-1])), no_of_episodes)
 
                 
             if len(self.replay_buffer) > self.batch_size:
@@ -165,7 +166,7 @@ class Double:
         print("===> Loading Checkpoint saved at {}".format(w_path))
         checkpoint = torch.load(os.path.join(self.log_dir, w_path))
         fr = checkpoint['frames']
-        self.model.load_state_dict(checkpoint['modelc'])
+        self.current_model.load_state_dict(checkpoint['modelc'])
         self.target_model.load_state_dict(checkpoint['modelt'])
 
         return fr
