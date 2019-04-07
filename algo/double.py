@@ -11,12 +11,8 @@ import torch.nn.functional as F
 
 from models.model import DQN, CnnDQN
 from utils.replay import ReplayBuffer
+from utils.logger import Logger
 from utils.loss_plotter import plot, eps_plot
-
-
-
-USE_CUDA = torch.cuda.is_available()
-Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if USE_CUDA else autograd.Variable(*args, **kwargs)
 
 
 class Double:
@@ -33,11 +29,15 @@ class Double:
         self.gamma = args.gamma
         self.plot_idx = args.plot_idx
         self.target_idx = args.target_idx
+        self.checkpoint_idx = args.checkpoint_idx
         self.device = device
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
         self.log_dir = _dir
         self.env_name = args.env_name.partition("NoFrameskip")
+        self.start_frame = args.start_frame
+        self.logger = Logger(mylog_path=args.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
+        
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
             self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -71,7 +71,14 @@ class Double:
 
         self.update_target()
 
-        for frame_idx in range(1, self.num_frames + 1):
+        if self.start_frame > 1:
+            fr = self.load_checkpoint(self.start_frame)
+            print("fr == start_frame: {}".format(fr == self.start_frame))
+            print("==> Resuming training from frame: {}".format(self.start_frame))
+
+        no_of_episodes = 0
+
+        for frame_idx in range(self.start_frame, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.current_model.act(state, epsilon)
             
@@ -82,21 +89,28 @@ class Double:
             episode_reward += reward
             
             if done:
+                no_of_episodes += 1
                 state = self.env.reset()
                 all_rewards.append(episode_reward)
                 episode_reward = 0
+                self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
+                self.logger.to_csv(np.concatenate((all_rewards[-1], frame_idx)), no_of_episodes)
+
                 
             if len(self.replay_buffer) > self.batch_size:
                 loss = self.compute_td_loss() #
                 losses.append(loss.item()) 
-                #self.experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
- 
+
             if frame_idx % self.plot_idx == 0:
                 plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name[0]) #
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
+
+            if frame_idx % self.checkpoint_idx == 0:
+                self.save_checkpoint(frame_idx)
+
 
             
 
@@ -133,6 +147,29 @@ class Double:
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
         eps_plot(eps_list, self.log_dir, self.env_name[0])
+
+
+    def save_checkpoint(self, nb_frame):
+        w_path = '%s/checkpoint_fr_%d.tar'.format("weights", nb_frame)
+        torch.save({
+            'frames': fr,
+            'modelc': self.current_model.state_dict(),
+            'modelt': self.target_model.state_dict()
+        }, os.path.join(self.log_dir, w_path))
+        print("===> Checkpoint saved to {}".format(w_path))
+
+
+    def load_checkpoint(self, nb_frame):
+
+        w_path = '%s/checkpoint_fr_%d.tar'.format("weights", nb_frame)
+        print("===> Loading Checkpoint saved at {}".format(w_path))
+        checkpoint = torch.load(os.path.join(self.log_dir, w_path))
+        fr = checkpoint['frames']
+        self.model.load_state_dict(checkpoint['modelc'])
+        self.target_model.load_state_dict(checkpoint['modelt'])
+
+        return fr
+
 
 
 

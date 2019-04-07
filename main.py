@@ -66,6 +66,7 @@ def _main():
         #figure out directory stuff
         _dir = os.path.join(args.log_dir, "double")
         os.makedirs(_dir, exist_ok=True) #change this
+        os.makedirs(os.path.join(_dir,'weights'), exist_ok=True)
         _env = _env_set(args.env_name, args.env_type)
         alg = Double(args, _env, device, experiment, _dir)
         alg.epsilon_plot()
