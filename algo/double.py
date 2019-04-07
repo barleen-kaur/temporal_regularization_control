@@ -37,6 +37,7 @@ class Double:
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
         self.log_dir = _dir
+        self.env_name = args.env_name.partition("NoFrameskip")
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
             self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -88,11 +89,11 @@ class Double:
             if len(self.replay_buffer) > self.batch_size:
                 loss = self.compute_td_loss() #
                 losses.append(loss.item()) 
-                self.experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
+                #self.experiment.log_metric("episode_reward", episode_reward, step=frame_idx)
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
  
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.log_dir) #
+                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name[0]) #
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
@@ -131,7 +132,7 @@ class Double:
 
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
-        eps_plot(eps_list, self.log_dir)
+        eps_plot(eps_list, self.log_dir, self.env_name[0])
 
 
 

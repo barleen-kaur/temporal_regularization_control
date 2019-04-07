@@ -5,7 +5,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from os.path import join
 
-def plot(frame_idx, rewards, losses, log_path):
+def plot(frame_idx, rewards, losses, log_path, env_name):
     
     fig, ax = plt.subplots()
     plt.title('frame %s. reward: %s' % (frame_idx, np.mean(rewards[-10:])))
@@ -21,7 +21,7 @@ def plot(frame_idx, rewards, losses, log_path):
                 left=False, # turn off left ticks
                 right=False,  # turn off right ticks
                 bottom=False) # turn off bottom ticks
-    plt.savefig(join(log_path,"reward"+".png"))
+    plt.savefig(join(log_path,env_name+"_reward.png"))
     plt.close()
 
     fig, ax = plt.subplots()
@@ -38,11 +38,11 @@ def plot(frame_idx, rewards, losses, log_path):
                 left=False, # turn off left ticks
                 right=False,  # turn off right ticks
                 bottom=False) # turn off bottom ticks
-    plt.savefig(join(log_path,"loss"+".png"))
+    plt.savefig(join(log_path,env_name+"_loss.png"))
     plt.close()
 
 
-def eps_plot(eps_list, log_path):
+def eps_plot(eps_list, log_path, env_name):
     
     fig, ax = plt.subplots()
     plt.plot(eps_list)
@@ -58,5 +58,5 @@ def eps_plot(eps_list, log_path):
                 left=False, # turn off left ticks
                 right=False,  # turn off right ticks
                 bottom=False) # turn off bottom ticks
-    plt.savefig(join(log_path,"eps"+".png"))
+    plt.savefig(join(log_path, env_name+"_eps.png"))
     plt.close()
