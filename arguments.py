@@ -24,7 +24,7 @@ def get_args():
     parser.add_argument('--num_frames', type=int, default=1400000, help='number of frames (default: 1400000)')
     parser.add_argument('--start_frame', type=int, default=0, help='frame number to start training (default: 0)')
     parser.add_argument('--frame_stack', type=bool, default=True, help='frame stack : True/False (default: True)')
-    parser.add_argument('--frame_skip', type=int, default=4, help='number of frame to skip (default: 4)')
+    parser.add_argument('--frame_skip', type=int, default=1, help='number of frame to skip (default: 1)')
     parser.add_argument('--beta', type=float, default=0, help='beta value (default: 0)')
     parser.add_argument('--lamb', type=float, default=0.1, help='lambda value(default: 0)')
     parser.add_argument('--comet', type=str, default="online")

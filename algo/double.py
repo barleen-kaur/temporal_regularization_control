@@ -1,3 +1,4 @@
+import os
 import math
 import random
 import numpy as np
@@ -31,14 +32,14 @@ class Double:
         self.checkpoint_idx = args.checkpoint_idx
         self.env_name = args.env_name.partition("NoFrameskip")
         self.start_frame = args.start_frame
-        self.beta = args.beta
+        self._beta = args.beta
         self._lambda = args.lamb
         self.env = env
         self.device = device
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
         self.log_dir = _dir
-        self._p = torch.FloatTensor((self.env.action_space.n)) #
+        self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
         self.logger = Logger(mylog_path=self.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
         
         if args.env_type == "gym":
@@ -73,12 +74,13 @@ class Double:
         state = self.env.reset()
 
         self.update_target()
+        state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
 
-        self._p = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
+        self._p = self.current_model(state_unsqueezed)
+        #print("_p.shape: {}".format(self._p.shape))
 
         if self.start_frame > 1:
             fr = self.load_checkpoint(self.start_frame)
-            print("fr == start_frame: {}".format(fr == self.start_frame))
             print("==> Resuming training from frame: {}".format(self.start_frame))
 
         no_of_episodes = 0
@@ -86,7 +88,7 @@ class Double:
         for frame_idx in range(self.start_frame, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.current_model.act(state, epsilon)
-            p_action = self._p[action].detach()
+            p_action = self._p[0][action].detach()
             next_state, reward, done, _ = self.env.step(action)
 
             self.replay_buffer.push(state, action, reward, next_state, done, p_action)
@@ -96,13 +98,15 @@ class Double:
             
             if done:
                 no_of_episodes += 1
-                print("No of episodes ended: {}".format(no_of_episodes))
+                #print("No of episodes ended: {}".format(no_of_episodes))
                 state = self.env.reset()
                 all_rewards.append(episode_reward)
                 episode_reward = 0
                 self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
-                self.logger.to_csv(np.concatenate((frame_idx, all_rewards[-1])), no_of_episodes)
-                self._p = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
+                self.save_checkpoint(frame_idx)
+                self.logger.to_csv(np.array([frame_idx,all_rewards[-1]]), no_of_episodes)
+                state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
+                self._p = self.current_model(state_unsqueezed)
 
                 
             if len(self.replay_buffer) > self.batch_size:
@@ -116,10 +120,11 @@ class Double:
             if frame_idx % self.target_idx == 0:
                 self.update_target()
 
-            if frame_idx % self.checkpoint_idx == 0:
-                self.save_checkpoint(frame_idx)
-
-            q_value = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
+            #if frame_idx % self.checkpoint_idx == 0:
+                #self.save_checkpoint(frame_idx)
+            
+            state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
+            q_value = self.current_model(state_unsqueezed)
             self._p = (1- self._lambda)*q_value + self._lambda*self._p
             
 
@@ -145,7 +150,7 @@ class Double:
         #print("q_value :{}, shape: {}".format(q_value, q_value.shape))
         next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) 
         #print("next_q_value :{}, shape: {}".format(next_q_value, next_q_value.shape))
-        expected_q_value = reward + self.gamma * [(1-self._beta)*next_q_value * (1 - done) + self._beta*p_action*(1-done)] #check if self._beta*p needs to be multiplied with (1 - done)
+        expected_q_value = reward + self.gamma *(1-done)*((1.0-self._beta)*next_q_value + self._beta*p_action)
         #print("expected_q_value: {}, shape: {}".format(expected_q_value, expected_q_value.shape))
      
         loss = (q_value - expected_q_value).pow(2).mean() 
@@ -163,18 +168,18 @@ class Double:
 
 
     def save_checkpoint(self, nb_frame):
-        w_path = '%s/checkpoint_fr_%d.tar'.format("weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%("weights", nb_frame)
         torch.save({
-            'frames': fr,
+            'frames': nb_frame,
             'modelc': self.current_model.state_dict(),
             'modelt': self.target_model.state_dict()
         }, os.path.join(self.log_dir, w_path))
-        print("===> Checkpoint saved to {}".format(w_path))
+        #print("===> Checkpoint saved to {}".format(w_path))
 
 
     def load_checkpoint(self, nb_frame):
 
-        w_path = '%s/checkpoint_fr_%d.tar'.format("weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%("weights", nb_frame)
         print("===> Loading Checkpoint saved at {}".format(w_path))
         checkpoint = torch.load(os.path.join(self.log_dir, w_path))
         fr = checkpoint['frames']

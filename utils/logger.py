@@ -16,7 +16,7 @@ class Logger(object):
 
     def to_csv(self, metric_array, nb_episode):
         
-        if nb_episode == 0:
+        if nb_episode == 1:
             met_c =  self.metric_names
             df = pd.DataFrame(columns=met_c)
             df.loc[0] = metric_array
