@@ -47,8 +47,8 @@ def _env_set(env_name, env_type):
             env = gym.make(env_name)
 
     elif env_type == 'atari':
-        env = make_atari(env_name)
-        env = wrap_deepmind(env)
+        env = make_atari(env_name, skip=args.frame_skip)
+        env = wrap_deepmind(env, frame_stack=args.frame_stack)
         env = wrap_pytorch(env)
 
     return env

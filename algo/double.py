@@ -20,7 +20,6 @@ class Double:
     def __init__(self, args, env, device, experiment, _dir):
         self.args = args
         self.env_type = args.env_type
-        self.env = env
         self.eps_s = args.eps_s
         self.eps_f = args.eps_f
         self.eps_decay = args.eps_decay
@@ -30,12 +29,16 @@ class Double:
         self.plot_idx = args.plot_idx
         self.target_idx = args.target_idx
         self.checkpoint_idx = args.checkpoint_idx
+        self.env_name = args.env_name.partition("NoFrameskip")
+        self.start_frame = args.start_frame
+        self.beta = args.beta
+        self._lambda = args.lamb
+        self.env = env
         self.device = device
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
         self.log_dir = _dir
-        self.env_name = args.env_name.partition("NoFrameskip")
-        self.start_frame = args.start_frame
+        self._p = torch.FloatTensor((self.env.action_space.n)) #
         self.logger = Logger(mylog_path=self.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
         
         if args.env_type == "gym":
@@ -71,6 +74,8 @@ class Double:
 
         self.update_target()
 
+        self._p = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
+
         if self.start_frame > 1:
             fr = self.load_checkpoint(self.start_frame)
             print("fr == start_frame: {}".format(fr == self.start_frame))
@@ -81,9 +86,10 @@ class Double:
         for frame_idx in range(self.start_frame, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.current_model.act(state, epsilon)
-            
+            p_action = self._p[action].detach()
             next_state, reward, done, _ = self.env.step(action)
-            self.replay_buffer.push(state, action, reward, next_state, done)
+
+            self.replay_buffer.push(state, action, reward, next_state, done, p_action)
             
             state = next_state
             episode_reward += reward
@@ -96,6 +102,7 @@ class Double:
                 episode_reward = 0
                 self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
                 self.logger.to_csv(np.concatenate((frame_idx, all_rewards[-1])), no_of_episodes)
+                self._p = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
 
                 
             if len(self.replay_buffer) > self.batch_size:
@@ -104,7 +111,7 @@ class Double:
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name[0]) #
+                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name[0]) 
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
@@ -112,38 +119,43 @@ class Double:
             if frame_idx % self.checkpoint_idx == 0:
                 self.save_checkpoint(frame_idx)
 
-
+            q_value = self.current_model(torch.FloatTensor(np.float32(state)).to(self.device))
+            self._p = (1- self._lambda)*q_value + self._lambda*self._p
             
 
     def compute_td_loss(self):
 
-        state, action, reward, next_state, done = self.replay_buffer.sample(self.batch_size) #
-
-        state      = torch.FloatTensor(np.float32(state)).to(self.device) #
-        next_state = torch.FloatTensor(np.float32(next_state)).to(self.device) #
-        action     = torch.LongTensor(action).to(self.device) #
-        reward     = torch.FloatTensor(reward).to(self.device) #
-        done       = torch.FloatTensor(done).to(self.device) #
+        
+        state, action, reward, next_state, done, p_action = self.replay_buffer.sample(self.batch_size) 
+        
+        state      = torch.FloatTensor(np.float32(state)).to(self.device) 
+        next_state = torch.FloatTensor(np.float32(next_state)).to(self.device) 
+        action     = torch.LongTensor(action).to(self.device) 
+        reward     = torch.FloatTensor(reward).to(self.device) 
+        done       = torch.FloatTensor(done).to(self.device)
+        p_action  = torch.FloatTensor(p_action).to(self.device)
         #print("action: {}, shape:{}".format(action, action.shape))
         #print("done: {}, shape:{}".format(done, done.shape))
 
-        q_values = self.current_model(state) #
-        next_q_values = self.current_model(next_state) #
+        q_values = self.current_model(state) 
+        next_q_values = self.current_model(next_state) 
         next_q_state_values = self.target_model(next_state) 
         #print("q_values :{}, shape: {}".format(q_values, q_values.shape)) 
-        q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  #
+        q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  
         #print("q_value :{}, shape: {}".format(q_value, q_value.shape))
-        next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) #
+        next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) 
         #print("next_q_value :{}, shape: {}".format(next_q_value, next_q_value.shape))
-        expected_q_value = reward + self.gamma * next_q_value * (1 - done)
+        expected_q_value = reward + self.gamma * [(1-self._beta)*next_q_value * (1 - done) + self._beta*p_action*(1-done)] #check if self._beta*p needs to be multiplied with (1 - done)
         #print("expected_q_value: {}, shape: {}".format(expected_q_value, expected_q_value.shape))
-        loss = (q_value - expected_q_value).pow(2).mean() #
+     
+        loss = (q_value - expected_q_value).pow(2).mean() 
             
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        
         return loss
+
+
 
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
