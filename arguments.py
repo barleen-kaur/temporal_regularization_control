@@ -3,6 +3,7 @@ import torch
 
 
 def get_args():
+    
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument('--algo', default='double', help='algorithm to use: dqn | double')
     parser.add_argument('--optim', type=str, default='adam', help='optimizer name (default: adam)')
@@ -18,7 +19,7 @@ def get_args():
     parser.add_argument('--replay_buff', type=int, default=100000, help='size of replay buffer (default: 100000)')
     parser.add_argument('--plot_idx', type=int, default=10000, help='frequency with which to plot the graph')
     parser.add_argument('--target_idx', type=int, default=1000, help='no of steps for updating target network')
-    parser.add_argument('--checkpoint_idx', type=int, default=1000, help='checkpointing frequency')
+    parser.add_argument('--checkpoint_idx', type=int, default=5, help='checkpointing frequency in terms of no of episodes')
     parser.add_argument('--env_type', default='atari', help='gym or atari (default: gym)')
     parser.add_argument('--env_name', default='PongNoFrameskip-v4', help='environment to train on (default: PongNoFrameskip-v4)')
     parser.add_argument('--num_frames', type=int, default=1400000, help='number of frames (default: 1400000)')

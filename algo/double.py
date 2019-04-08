@@ -103,7 +103,8 @@ class Double:
                 all_rewards.append(episode_reward)
                 episode_reward = 0
                 self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
-                self.save_checkpoint(frame_idx)
+                if no_of_episodes % self.checkpoint_idx == 1:
+                    self.save_checkpoint(frame_idx)
                 self.logger.to_csv(np.array([frame_idx,all_rewards[-1]]), no_of_episodes)
                 state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
                 self._p = self.current_model(state_unsqueezed)
