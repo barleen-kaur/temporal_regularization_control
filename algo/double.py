@@ -150,7 +150,7 @@ class Double:
         #print("q_value :{}, shape: {}".format(q_value, q_value.shape))
         next_q_value = next_q_state_values.gather(1, torch.max(next_q_values, 1)[1].unsqueeze(1)).squeeze(1) 
         #print("next_q_value :{}, shape: {}".format(next_q_value, next_q_value.shape))
-        expected_q_value = reward + self.gamma *(1-done)*((1.0-self._beta)*next_q_value + self._beta*p_action)
+        expected_q_value = reward + self.gamma *((1.0-self._beta)*(1-done)*next_q_value + self._beta*p_action)
         #print("expected_q_value: {}, shape: {}".format(expected_q_value, expected_q_value.shape))
      
         loss = (q_value - expected_q_value).pow(2).mean() 
