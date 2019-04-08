@@ -64,8 +64,11 @@ def _main():
 
     elif args.algo == 'double':
         #figure out directory stuff
-        _dir = os.path.join(args.log_dir, "double")
+        _dir = os.path.join(args.log_dir, "double_results")
         os.makedirs(_dir, exist_ok=True) #change this
+        os.makedirs(os.path.join(_dir,'beta_'+str(args.beta)), exist_ok=True)
+        os.makedirs(os.path.join(_dir,'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+        _dir = os.path.join(_dir,'beta_'+str(args.beta),'lambda_'+str(args.lamb))
         os.makedirs(os.path.join(_dir,'weights'), exist_ok=True)
         _env = _env_set(args.env_name, args.env_type)
         alg = Double(args, _env, device, experiment, _dir)
