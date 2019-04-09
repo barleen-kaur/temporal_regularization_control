@@ -18,7 +18,7 @@ from utils.loss_plotter import plot, eps_plot
 
 class Double:
 
-    def __init__(self, args, env, device, experiment, _dir):
+    def __init__(self, args, env, env_name, device, experiment, _dir):
         self.args = args
         self.env_type = args.env_type
         self.eps_s = args.eps_s
@@ -30,7 +30,7 @@ class Double:
         self.plot_idx = args.plot_idx
         self.target_idx = args.target_idx
         self.checkpoint_idx = args.checkpoint_idx
-        self.env_name = args.env_name.partition("NoFrameskip")
+        self.env_name = env_name
         self.start_frame = args.start_frame
         self._beta = args.beta
         self._lambda = args.lamb
@@ -40,7 +40,7 @@ class Double:
         self.experiment =  experiment
         self.log_dir = _dir
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
-        self.logger = Logger(mylog_path=self.log_dir, mylog_name="training.log", mymetric_names=['frame', 'rewards'])
+        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_training.log", mymetric_names=['frame', 'rewards'])
         
         if args.env_type == "gym":
             self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n)
@@ -116,7 +116,7 @@ class Double:
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name[0]) 
+                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name) 
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
@@ -165,11 +165,11 @@ class Double:
 
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
-        eps_plot(eps_list, self.log_dir, self.env_name[0])
+        eps_plot(eps_list, self.log_dir, self.env_name)
 
 
     def save_checkpoint(self, nb_frame):
-        w_path = '%s/checkpoint_fr_%d.tar'%("weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_weights", nb_frame)
         torch.save({
             'frames': nb_frame,
             'modelc': self.current_model.state_dict(),
@@ -180,7 +180,7 @@ class Double:
 
     def load_checkpoint(self, nb_frame):
 
-        w_path = '%s/checkpoint_fr_%d.tar'%("weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_weights", nb_frame)
         print("===> Loading Checkpoint saved at {}".format(w_path))
         checkpoint = torch.load(os.path.join(self.log_dir, w_path))
         fr = checkpoint['frames']

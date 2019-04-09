@@ -2,6 +2,7 @@
 
 import os
 import time
+import random
 import numpy as np
 from collections import deque
 from comet_ml import OfflineExperiment, Experiment
@@ -30,10 +31,12 @@ else:
 
 experiment.log_parameters(vars(args))
 
+random.seed(args.seed)
+np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
 
-if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
+if args.cuda and torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
@@ -44,7 +47,7 @@ if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
 def _env_set(env_name, env_type):
 
     if env_type == 'gym':
-            env = gym.make(env_name)
+        env = gym.make(env_name)
 
     elif env_type == 'atari':
         env = make_atari(env_name, skip=args.frame_skip)
@@ -55,7 +58,6 @@ def _env_set(env_name, env_type):
 
 def _main():
     
-    torch.set_num_threads(1) #what's this?
     device = torch.device("cuda:1" if args.cuda else "cpu")
 
 
@@ -66,12 +68,19 @@ def _main():
         #figure out directory stuff
         _dir = os.path.join(args.log_dir, "double_results")
         os.makedirs(_dir, exist_ok=True) #change this
-        os.makedirs(os.path.join(_dir,'beta_'+str(args.beta)), exist_ok=True)
-        os.makedirs(os.path.join(_dir,'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-        _dir = os.path.join(_dir,'beta_'+str(args.beta),'lambda_'+str(args.lamb))
-        os.makedirs(os.path.join(_dir,'weights'), exist_ok=True)
-        _env = _env_set(args.env_name, args.env_type)
-        alg = Double(args, _env, device, experiment, _dir)
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed)), exist_ok=True)
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+        _dir = os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+        if args.env_type == "atari":
+           env_n = args.env_name.partition("NoFrameskip")
+           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+        elif args.env_type == "gym":
+           env_n = args.env_name.partition("-")
+           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+        env = _env_set(args.env_name, args.env_type)
+        env.seed(args.seed)  
+        alg = Double(args, env, env_n[0], device, experiment, _dir)
         alg.epsilon_plot()
         alg.train()
     
