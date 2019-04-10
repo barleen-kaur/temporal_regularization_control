@@ -42,18 +42,21 @@ class Double:
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
         self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_training.log", mymetric_names=['frame', 'rewards'])
         
-        if args.env_type == "gym":
+        if self.args.env_type == "gym" and self.args.FA == "linear":
             self.current_model = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
             self.target_model  = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
-        elif args.env_type == "atari":
+        if self.args.env_type == "gym" and self.args.FA == "deep":
+            self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+            self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+        elif self.args.env_type == "atari":
             self.current_model = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
             self.target_model  = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
         if device != "cpu":
             self.current_model = self.current_model.to(self.device)
             self.target_model = self.target_model.to(self.device)
-        if args.optim == 'adam':
+        if self.args.optim == 'adam':
             self.optimizer = optim.Adam(self.current_model.parameters(), lr=self.args.lr)
-        elif args.optim =='rmsprop':
+        elif self.args.optim =='rmsprop':
             self.optimizer = optim.RMSprop(self.current_model.parameters(), lr=self.args.lr)
 
 
@@ -116,7 +119,7 @@ class Double:
                 self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name) 
+                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name+"_"+self.args.FA) 
                 
             if frame_idx % self.target_idx == 0:
                 self.update_target()
@@ -165,11 +168,11 @@ class Double:
 
     def epsilon_plot(self):
         eps_list = [self.epsilon_by_frame(i) for i in range(self.num_frames)]
-        eps_plot(eps_list, self.log_dir, self.env_name)
+        eps_plot(eps_list, self.log_dir, self.env_name+"_"+self.args.FA)
 
 
     def save_checkpoint(self, nb_frame):
-        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_"+self.args.FA+"_weights", nb_frame)
         torch.save({
             'frames': nb_frame,
             'modelc': self.current_model.state_dict(),
@@ -180,7 +183,7 @@ class Double:
 
     def load_checkpoint(self, nb_frame):
 
-        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_weights", nb_frame)
+        w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_"+self.args.FA+"_weights", nb_frame)
         print("===> Loading Checkpoint saved at {}".format(w_path))
         checkpoint = torch.load(os.path.join(self.log_dir, w_path))
         fr = checkpoint['frames']

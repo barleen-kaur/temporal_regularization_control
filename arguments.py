@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument('--target_idx', type=int, default=1000, help='no of steps for updating target network')
     parser.add_argument('--checkpoint_idx', type=int, default=5, help='checkpointing frequency in terms of no of episodes')
     parser.add_argument('--env_type', default='atari', help='gym or atari (default: gym)')
+    parser.add_argument('--FA', default='linear', help='linear or deep (default: deep)')
     parser.add_argument('--env_name', default='PongNoFrameskip-v4', help='environment to train on (default: PongNoFrameskip-v4)')
     parser.add_argument('--num_frames', type=int, default=2000000, help='number of frames (default: 2000000)')
     parser.add_argument('--start_frame', type=int, default=0, help='frame number to start training (default: 0)')
