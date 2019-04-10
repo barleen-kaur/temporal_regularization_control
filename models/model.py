@@ -10,12 +10,13 @@ import torch.nn.functional as F
 
 class DQN(nn.Module):
     
-    def __init__(self, inp_channel, out_channel):
+    def __init__(self, inp_channel, out_channel, device):
         super(DQN, self).__init__()
 
         self.inp_channel = inp_channel
         self.out_channel = out_channel
-        
+        self.device = device
+
         self.layers = nn.Sequential(
             nn.Linear(self.inp_channel, 128),
             nn.ReLU(),
@@ -31,7 +32,7 @@ class DQN(nn.Module):
         with torch.no_grad():
             if random.random() > epsilon:
                 state   = torch.FloatTensor(state).unsqueeze(0) #change this
-                q_value = self.forward(state)
+                q_value = self.forward(state.to(self.device))
                 action  = q_value.max(1)[1].item()
             else:
                 action = random.randrange(self.out_channel)
