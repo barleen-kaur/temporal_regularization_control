@@ -8,6 +8,33 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 
 
+class LinearFA(nn.Module):
+    
+    def __init__(self, inp_channel, out_channel, device):
+        super(LinearFA, self).__init__()
+
+        self.inp_channel = inp_channel
+        self.out_channel = out_channel
+        self.device = device
+
+        self.layers = nn.Sequential(
+            nn.Linear(self.inp_channel, self.out_channel)
+        )
+        
+    def forward(self, x):
+        return self.layers(x)
+    
+    def act(self, state, epsilon):
+        with torch.no_grad():
+            if random.random() > epsilon:
+                state   = torch.FloatTensor(state).unsqueeze(0) #change this
+                q_value = self.forward(state.to(self.device))
+                action  = q_value.max(1)[1].item()
+            else:
+                action = random.randrange(self.out_channel)
+        return action
+
+
 class DQN(nn.Module):
     
     def __init__(self, inp_channel, out_channel, device):

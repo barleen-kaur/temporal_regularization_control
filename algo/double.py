@@ -43,8 +43,8 @@ class Double:
         self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_training.log", mymetric_names=['frame', 'rewards'])
         
         if args.env_type == "gym":
-            self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
-            self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+            self.current_model = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+            self.target_model  = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
         elif args.env_type == "atari":
             self.current_model = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
             self.target_model  = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
