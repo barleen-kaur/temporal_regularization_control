@@ -1,5 +1,5 @@
 """
-Agent that learns using SARSA(nstep)
+Agent that learns using n-step SARSA, 1-step SARSA and 1-step SARSA with temporal regularization. 
 
 Pseudo code: Pg. 147 on http://incompleteideas.net/book/RLbook2018.pdf
 
@@ -12,7 +12,7 @@ import numpy as np
 
 class AgentNstepSARSA():
     """
-
+    Agent that does n-step SARSA. See the associated notebook for ___. 
     """
 
     # Setting things up
@@ -74,11 +74,14 @@ class AgentNstepSARSA():
         return c[0]
 
 class AgentSARSA():
+    """
+    Agent that does one step SARSA with temporal regularization. 
+    """
+
     # Setting things up
-    def __init__(self, env, no_steps=3, alpha=0.05, eps=0.5, beta=0.2, lambd=0.2, gamma=0.9, epsDecay=True):
+    def __init__(self, env, alpha=0.05, eps=0.5, beta=0.2, lambd=0.2, gamma=0.9, epsDecay=True):
 
         # Initializing parameters
-        self.no_steps = no_steps
         self.noStates = env.observation_space.n
         self.noActions = env.action_space.n
         self.gamma = gamma
@@ -131,6 +134,10 @@ class AgentSARSA():
         return c[0]
 
     # Function for SARSA policy updates
-    def updatePolicySARSA(self, S, A, R, S2, A2):
-        self.Q[S,A] = self.Q[S,A] + self.alpha * (R + self.gamma * ((1 - self.beta) * self.Q[S2, A2] + self.beta * self.p[A2]) - self.Q[S,A])
+    def updatePolicySARSA(self, S, A, R, S2, A2, updateStates=None):
+        if(updateStates==None):
+            self.Q[S,A] = self.Q[S,A] + self.alpha * (R + self.gamma * ((1 - self.beta) * self.Q[S2, A2] + self.beta * self.p[A2]) - self.Q[S,A])
+        else:
+            if(S in updateStates):
+                self.Q[S,A] = self.Q[S,A] + self.alpha * (R + self.gamma * ((1 - self.beta) * self.Q[S2, A2] + self.beta * self.p[A2]) - self.Q[S,A])
         self.p = (1 - self.lambd) * self.Q[S,:] + self.lambd * self.p
