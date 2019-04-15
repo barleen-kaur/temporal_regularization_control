@@ -1,3 +1,9 @@
+## Toy Example: Control using Qvalues
+
+This repo implements 1-step SARSA, n-step SARSA and 1-step SARSA with temporal regularization. Check `toy_example_results.ipynb` for the results.
+
+===
+
 # temporal_regularization_control
 
 
