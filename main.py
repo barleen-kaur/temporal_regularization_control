@@ -18,7 +18,7 @@ from a2c_ppo_acktr.envs import make_vec_envs
 from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from evaluation import evaluate
-
+import csv
 
 def main():
     args = get_args()
@@ -93,6 +93,7 @@ def main():
                               actor_critic.recurrent_hidden_state_size)
 
     obs = envs.reset()
+    returns = []
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
@@ -118,11 +119,11 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
-
+                    returns.append(info['episode']['r'])
+                    
             # If done then clean the history of observations.
             masks = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done])
@@ -191,6 +192,12 @@ def main():
             ob_rms = utils.get_vec_normalize(envs).ob_rms
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
+
+    print('Storing returns to csv')
+    print(returns)
+    with open("test.csv", 'w') as myfile:
+        wr = csv.writer(myfile, delimiter=',')
+        wr.writerow(returns)
 
 
 if __name__ == "__main__":
