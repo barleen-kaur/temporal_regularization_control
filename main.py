@@ -123,7 +123,7 @@ def main():
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
                     returns.append(info['episode']['r'])
-                    
+
             # If done then clean the history of observations.
             masks = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done])
@@ -195,7 +195,7 @@ def main():
 
     print('Storing returns to csv')
     print(returns)
-    with open("test.csv", 'w') as myfile:
+    with open(args.save_returns_file, 'w') as myfile:
         wr = csv.writer(myfile, delimiter=',')
         wr.writerow(returns)
 
