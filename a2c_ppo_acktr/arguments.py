@@ -155,7 +155,7 @@ def get_args():
         type=float,
         default=0,
         help='Regularization term for actions')
-    parset.add_argument(
+    parser.add_argument(
         '--save-returns-file',
         default='returns.csv',
         help='location to save the returns in csv')
