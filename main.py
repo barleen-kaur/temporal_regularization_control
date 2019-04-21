@@ -193,7 +193,14 @@ def main():
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
 
-    print('Storing returns to csv')
+        if(j % 1000 == 0):
+            print('Storing results to ' + args.save_returns_file)
+            
+            with open(args.save_returns_file, 'w') as myfile:
+                wr = csv.writer(myfile, delimiter=',')
+                wr.writerow(returns)
+
+    print('Storing returns to ' + args.save_returns_file)
     print(returns)
     with open(args.save_returns_file, 'w') as myfile:
         wr = csv.writer(myfile, delimiter=',')
