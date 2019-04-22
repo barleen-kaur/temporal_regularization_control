@@ -89,14 +89,20 @@ class Policy(nn.Module):
             dist_entropy.append(dist.entropy())
 
             reg_curr = torch.tensor(0.0)
-            if eval_prev_mean is not None:
-                reg_curr = (eval_prev_mean - dist.logits).pow(2)
-                if self.deterministic:
-                    eval_prev_mean = dist.logits * masks[i,:,:]
-                else:
-                    eval_prev_mean = dist.loc * masks[i,:,:]
+            
+            if self.deterministic:
+                curr_mean = dist.logits
+            else:
+                curr_mean = dist.loc
 
+            if eval_prev_mean is not None:
+                reg_curr = (eval_prev_mean - curr_mean).pow(2) * masks[i,:,:]
+
+            eval_prev_mean = curr_mean
+            
             reg_policy.append(reg_curr)
+
+            import pdb; pdb.set_trace()
 
         action_log_probs = torch.stack(action_log_probs)
         dist_entropy = torch.stack(dist_entropy).mean()
