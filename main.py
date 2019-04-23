@@ -176,7 +176,7 @@ def main():
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
-            mean_returns.append(total_num_steps, np.mean(episode_rewards))
+            mean_returns.append([total_num_steps, np.mean(episode_rewards)])
             end = time.time()
             print(
                 "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.9f}\n"
