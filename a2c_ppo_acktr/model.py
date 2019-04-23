@@ -97,12 +97,14 @@ class Policy(nn.Module):
 
             if eval_prev_mean is not None:
                 reg_curr = (eval_prev_mean - curr_mean).pow(2) * masks[i,:,:]
+            else:
+                reg_curr = torch.zeros(curr_mean.shape)
 
             eval_prev_mean = curr_mean
             
             reg_policy.append(reg_curr)
 
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
 
         action_log_probs = torch.stack(action_log_probs)
         dist_entropy = torch.stack(dist_entropy).mean()

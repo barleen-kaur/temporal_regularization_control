@@ -157,7 +157,7 @@ def main():
         rollouts.compute_returns(next_value, args.use_gae, args.gamma,
                                  args.gae_lambda, args.use_proper_time_limits)
 
-        value_loss, action_loss, dist_entropy, reg, eval_prev_mean = agent.update(rollouts, eval_prev_mean)
+        value_loss, action_loss, dist_entropy, reg_loss, eval_prev_mean = agent.update(rollouts, eval_prev_mean)
 
         rollouts.after_update()
 
@@ -179,13 +179,13 @@ def main():
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
             end = time.time()
             print(
-                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n"
+                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.3f}\n"
                 .format(j, total_num_steps,
                         int(total_num_steps / (end - start)),
                         len(episode_rewards), np.mean(episode_rewards),
                         np.median(episode_rewards), np.min(episode_rewards),
                         np.max(episode_rewards), dist_entropy, value_loss,
-                        action_loss))
+                        action_loss, reg_loss))
 
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
