@@ -94,6 +94,8 @@ def main():
 
     obs = envs.reset()
     mean_returns = []
+    prev_action = torch.FloatTensor()
+    action_changes = 0
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
@@ -117,9 +119,18 @@ def main():
                     rollouts.obs[step], rollouts.recurrent_hidden_states[step],
                     rollouts.masks[step])
 
+            
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-            for info in infos:
+
+            # Code to track action changes
+            # import pdb; pdb.set_trace()
+            if(not prev_action.nelement()==0):
+                action_changes += (1-(np.multiply(masks, (prev_action==action).numpy()))).sum()
+            prev_action = action
+            
+            for ind, info in enumerate(infos):
+                # If statement to see if episode ended
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
 
@@ -174,18 +185,20 @@ def main():
                 getattr(utils.get_vec_normalize(envs), 'ob_rms', None)
             ], os.path.join(save_path, args.env_name + ".pt"))
 
-        if j % args.log_interval == 0 and len(episode_rewards) > 1:
-            total_num_steps = (j + 1) * args.num_processes * args.num_steps
-            mean_returns.append([total_num_steps, np.mean(episode_rewards)])
-            end = time.time()
-            print(
-                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.9f}\n"
-                .format(j, total_num_steps,
-                        int(total_num_steps / (end - start)),
-                        len(episode_rewards), np.mean(episode_rewards),
-                        np.median(episode_rewards), np.min(episode_rewards),
-                        np.max(episode_rewards), dist_entropy, value_loss,
-                        action_loss, reg_loss))
+        if j % args.log_interval == 0:
+            if(len(episode_rewards) > 1):
+                total_num_steps = (j + 1) * args.num_processes * args.num_steps
+                mean_returns.append([total_num_steps, np.mean(episode_rewards), action_changes])
+                end = time.time()
+                print(
+                    "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}, action_changes {}, \ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.9f}\n"
+                    .format(j, total_num_steps,
+                            int(total_num_steps / (end - start)),
+                            len(episode_rewards), np.mean(episode_rewards),
+                            np.median(episode_rewards), np.min(episode_rewards),
+                            np.max(episode_rewards), action_changes, dist_entropy, value_loss,
+                            action_loss, reg_loss))
+            action_changes = 0 # reset value of action changes
 
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
@@ -193,10 +206,12 @@ def main():
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
 
-        if(j % 100 == 0):
+        if(j % 1000 == 0):
             print('Storing results to ' + args.save_returns_file)
             np.savetxt(args.save_returns_file, mean_returns)
 
+    print('Storing results to ' + args.save_returns_file)
+    np.savetxt(args.save_returns_file, mean_returns)
 
 if __name__ == "__main__":
     main()
