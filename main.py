@@ -93,7 +93,7 @@ def main():
                               actor_critic.recurrent_hidden_state_size)
 
     obs = envs.reset()
-    returns = []
+    mean_returns = []
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
@@ -122,7 +122,6 @@ def main():
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
-                    returns.append(info['episode']['r'])
 
             # If done then clean the history of observations.
             masks = torch.FloatTensor(
@@ -177,9 +176,10 @@ def main():
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
+            mean_returns.append(total_num_steps, np.mean(episode_rewards))
             end = time.time()
             print(
-                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.3f}\n"
+                "Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\ndist entropy {:.3f}, value loss {:.3f}, action loss {:.3f}, reg_loss {:.9f}\n"
                 .format(j, total_num_steps,
                         int(total_num_steps / (end - start)),
                         len(episode_rewards), np.mean(episode_rewards),
@@ -193,18 +193,9 @@ def main():
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
 
-        if(j % 1000 == 0):
+        if(j % 100 == 0):
             print('Storing results to ' + args.save_returns_file)
-            
-            with open(args.save_returns_file, 'w') as myfile:
-                wr = csv.writer(myfile, delimiter=',')
-                wr.writerow(returns)
-
-    print('Storing returns to ' + args.save_returns_file)
-    print(returns)
-    with open(args.save_returns_file, 'w') as myfile:
-        wr = csv.writer(myfile, delimiter=',')
-        wr.writerow(returns)
+            np.savetxt(args.save_returns_file, mean_returns)
 
 
 if __name__ == "__main__":
