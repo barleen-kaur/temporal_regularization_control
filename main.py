@@ -77,7 +77,7 @@ def _main():
            os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
         elif args.env_type == "gym":
            env_n = args.env_name.partition("-")
-           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+           os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         env = _env_set(args.env_name, args.env_type)
         env.seed(args.seed) 
         alg = Double(args, env, env_n[0], device, experiment, _dir)

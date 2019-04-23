@@ -10,7 +10,7 @@ import torch.optim as optim
 import torch.autograd as autograd 
 import torch.nn.functional as F
 
-from models.model import DQN, CnnDQN
+from models.model import DQN, CnnDQN, LinearFA
 from utils.replay import ReplayBuffer
 from utils.logger import Logger
 from utils.loss_plotter import plot, eps_plot
@@ -40,7 +40,7 @@ class Double:
         self.experiment =  experiment
         self.log_dir = _dir
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
-        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_training.log", mymetric_names=['frame', 'rewards'])
+        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'rewards'])
         
         if self.args.env_type == "gym" and self.args.FA == "linear":
             self.current_model = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)

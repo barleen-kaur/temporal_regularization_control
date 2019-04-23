@@ -1,8 +1,8 @@
 #!/bin/bash
 while read -r seed
 do
-   while read -r est_beta
+   while read -r beta
    do
-      ./train.sh $seed $est_beta 
+      ./train.sh $seed $beta 
    done < beta.txt
 done < seed.txt
