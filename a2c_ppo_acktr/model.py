@@ -87,8 +87,6 @@ class Policy(nn.Module):
 
             action_log_probs.append(dist.log_probs(action[i,:,:]))
             dist_entropy.append(dist.entropy())
-
-            reg_curr = torch.tensor(0.0)
             
             if self.deterministic:
                 curr_mean = dist.logits
