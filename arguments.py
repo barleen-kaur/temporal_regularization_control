@@ -28,6 +28,7 @@ def get_args():
     parser.add_argument('--frame_skip', type=int, default=4, help='number of frame to skip (default: 4)')
     parser.add_argument('--beta', type=float, default=0, help='beta value (default: 0)')
     parser.add_argument('--lamb', type=float, default=0.1, help='lambda value(default: 0.1)')
+    parser.add_argument('--return_deque', type=float, default=20, help='size of deque for storing return in previous n recent episodes(default: 20)')
     parser.add_argument('--comet', type=str, default="online")
     parser.add_argument('--disable_log', type=bool, default=False, help='set it to True to disable comet logging')
     parser.add_argument('--log_dir', default='/usr/local/data/barleenk/python-environments/python3/temporal_regularization_control/', help='directory to save agent logs (default: /tmp/gym)')

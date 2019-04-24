@@ -41,7 +41,7 @@ class Double:
         self.experiment =  experiment
         self.log_dir = _dir
         self.action_count = 0
-        self.episode_rewards = deque([0 for i in range(20)],maxlen=20)
+        self.episode_rewards = deque([0 for i in range(self.args.return_deque)],maxlen=self.args.return_deque)
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
         self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'episodes_done' , 'episode_return', 'loss', 'action_change'])
         self.LP = LossPlotter(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", env_name=self.env_name+"_"+self.args.FA, xmetric_name= 'frame', ymetric_names=['episode_return', 'loss', 'action_change'])
