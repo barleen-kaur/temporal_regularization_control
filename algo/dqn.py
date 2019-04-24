@@ -155,13 +155,12 @@ class DQN:
         done       = torch.FloatTensor(done).to(self.device)
         p_action  = torch.FloatTensor(p_action).to(self.device)
         
-        with torch.no_grad():
-            next_state = torch.FloatTensor(np.float32(next_state)).to(self.device)
+        next_state = torch.FloatTensor(np.float32(next_state)).to(self.device)
         #print("action: {}, shape:{}".format(action, action.shape))
         #print("done: {}, shape:{}".format(done, done.shape))
 
         q_values = self.model(state) 
-        next_q_values = self.model(next_state)  
+        next_q_values = self.model(next_state).detach()  
         #print("q_values :{}, shape: {}".format(q_values, q_values.shape)) 
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  
         #print("q_value :{}, shape: {}".format(q_value, q_value.shape))

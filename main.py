@@ -15,7 +15,8 @@ import torch.optim as optim
 
 from common.wrappers import make_atari, wrap_deepmind, wrap_pytorch
 from arguments import get_args
-from algo.double import Double, DQN
+from algo.double import Double
+from algo.dqn import DQN
 
 args = get_args()
 

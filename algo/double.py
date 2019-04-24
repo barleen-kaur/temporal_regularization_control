@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.autograd as autograd 
 import torch.nn.functional as F
 
-from models.model import DQN, CnnDQN, LinearFA
+from models.model import Deep, CnnDQN, LinearFA
 from utils.replay import ReplayBuffer
 from utils.logger import Logger 
 from utils.loss_plotter import eps_plot, LossPlotter
@@ -41,7 +41,7 @@ class Double:
         self.experiment =  experiment
         self.log_dir = _dir
         self.action_count = 0
-        self.episode_rewards = deque([0 for i in range(self.args.return_deque)],maxlen=self.args.return_deque)
+        self.episode_rewards = deque(maxlen=self.args.return_deque)
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
         self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'episodes_done' , 'episode_return', 'loss', 'action_change'])
         self.LP = LossPlotter(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", env_name=self.env_name+"_"+self.args.FA, xmetric_name= 'frame', ymetric_names=['episode_return', 'loss', 'action_change'])
@@ -51,8 +51,8 @@ class Double:
             self.current_model = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
             self.target_model  = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
         if self.args.env_type == "gym" and self.args.FA == "deep":
-            self.current_model = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
-            self.target_model  = DQN(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+            self.current_model = Deep(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
+            self.target_model  = Deep(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
         elif self.args.env_type == "atari":
             self.current_model = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
             self.target_model  = CnnDQN(self.env.observation_space.shape, self.env.action_space.n, self.device)
@@ -166,8 +166,8 @@ class Double:
         #print("done: {}, shape:{}".format(done, done.shape))
 
         q_values = self.current_model(state) 
-        next_q_values = self.current_model(next_state) 
-        next_q_state_values = self.target_model(next_state) 
+        next_q_values = self.current_model(next_state).detach() 
+        next_q_state_values = self.target_model(next_state).detach()
         #print("q_values :{}, shape: {}".format(q_values, q_values.shape)) 
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)  
         #print("q_value :{}, shape: {}".format(q_value, q_value.shape))
