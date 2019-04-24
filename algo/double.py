@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from models.model import DQN, CnnDQN, LinearFA
 from utils.replay import ReplayBuffer
 from utils.logger import Logger 
-from utils.loss_plotter import plot, eps_plot, LossPlotter
+from utils.loss_plotter import eps_plot, LossPlotter
 
 
 class Double:
@@ -41,10 +41,10 @@ class Double:
         self.experiment =  experiment
         self.log_dir = _dir
         self.action_count = 0
-        self.episode_rewards = deque([0 for i in range(10)],maxlen=10)
+        self.episode_rewards = deque([0 for i in range(20)],maxlen=20)
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
-        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'episodes_done' , 'episode_return', 'loss'])
-        self.LP = LossPlotter(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", xmetric_name= 'frame', ymetric_names=['episode_return', 'loss'])
+        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'episodes_done' , 'episode_return', 'loss', 'action_change'])
+        self.LP = LossPlotter(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", env_name=self.env_name+"_"+self.args.FA, xmetric_name= 'frame', ymetric_names=['episode_return', 'loss', 'action_change'])
 
 
         if self.args.env_type == "gym" and self.args.FA == "linear":
@@ -130,8 +130,12 @@ class Double:
             #self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx % self.plot_idx == 0:
-                self.logger.to_csv(np.array([frame_idx, no_of_episodes , np.mean(episode_rewards), np.mean(losses)]), self.plot_idx)
+                #print("Frame: {}, Reward: {}, Loss: {}, action: {}".format(frame_idx, np.mean(self.episode_rewards), np.mean(losses), self.action_count))
+                self.logger.to_csv(np.array([frame_idx, no_of_episodes , np.mean(self.episode_rewards), np.mean(losses), self.action_count]), self.plot_idx)
                 self.LP.plotter() 
+                self.experiment.log_metric("loss", np.mean(losses), step=frame_idx)
+                self.experiment.log_metric("return", np.mean(self.episode_rewards), step=frame_idx)
+                self.experiment.log_metric("action", self.action_count, step=frame_idx)
                 losses =[]
                 self.action_count = 0
 

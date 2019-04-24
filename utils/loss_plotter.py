@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -8,10 +9,11 @@ from os.path import join
 
 class LossPlotter(object):
 
-    def __init__(self, mylog_path="./log", mylog_name="training.log", xmetric_name = 'frame', ymetric_names=[ 'episode_return', 'loss']):
+    def __init__(self, mylog_path="./log", mylog_name="training.log", env_name = "CartPole", xmetric_name = 'frame', ymetric_names=[ 'episode_return', 'loss']):
         super(LossPlotter, self).__init__()
         self.log_path = mylog_path
         self.log_name = mylog_name
+        self.env_name = env_name
         self.xmetric_name = xmetric_name
         self.metric_names = list(ymetric_names)
         os.makedirs(join(self.log_path, "plot"), exist_ok=True)
@@ -35,7 +37,7 @@ class LossPlotter(object):
                         left=False, # turn off left ticks
                         right=False,  # turn off right ticks
                         bottom=False) # turn off bottom ticks
-            plt.savefig(join(self.log_path,"plot",self.metric_names[i]+".png"))
+            plt.savefig(join(self.log_path,"plot",self.env_name+"_"+self.metric_names[i]+".png"))
             plt.close()
    
 
@@ -56,5 +58,5 @@ def eps_plot(eps_list, log_path, env_name):
                 left=False, # turn off left ticks
                 right=False,  # turn off right ticks
                 bottom=False) # turn off bottom ticks
-    plt.savefig(join(log_path, env_name+"_eps.png"))
+    plt.savefig(join(log_path,"plot", env_name+"_eps.png"))
     plt.close()

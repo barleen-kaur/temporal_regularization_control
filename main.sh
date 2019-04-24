@@ -3,6 +3,9 @@ while read -r seed
 do
    while read -r beta
    do
-      ./train.sh $seed $beta 
+	while read -r lambda
+	do
+		./train.sh $seed $beta $lambda
+   	done < lambda.txt
    done < beta.txt
 done < seed.txt
