@@ -14,9 +14,9 @@ class Logger(object):
         self.log_name = mylog_name
         self.metric_names = list(mymetric_names)
 
-    def to_csv(self, metric_array, nb_episode):
+    def to_csv(self, metric_array, plot_idx):
         
-        if nb_episode == 1:
+        if metric_array[0] == plot_idx:
             met_c =  self.metric_names
             df = pd.DataFrame(columns=met_c)
             df.loc[0] = metric_array

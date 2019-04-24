@@ -2,6 +2,7 @@ import os
 import math
 import random
 import numpy as np
+from collections import deque
 
 import gym
 import torch
@@ -12,8 +13,8 @@ import torch.nn.functional as F
 
 from models.model import DQN, CnnDQN, LinearFA
 from utils.replay import ReplayBuffer
-from utils.logger import Logger
-from utils.loss_plotter import plot, eps_plot
+from utils.logger import Logger 
+from utils.loss_plotter import plot, eps_plot, LossPlotter
 
 
 class Double:
@@ -39,9 +40,13 @@ class Double:
         self.replay_buffer = ReplayBuffer(args.replay_buff)
         self.experiment =  experiment
         self.log_dir = _dir
+        self.action_count = 0
+        self.episode_rewards = deque([0 for i in range(10)],maxlen=10)
         self._p = torch.zeros([1, self.env.action_space.n], dtype=torch.float32)
-        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'rewards'])
-        
+        self.logger = Logger(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", mymetric_names=['frame', 'episodes_done' , 'episode_return', 'loss'])
+        self.LP = LossPlotter(mylog_path=self.log_dir, mylog_name=self.env_name+"_"+self.args.FA+"_training.log", xmetric_name= 'frame', ymetric_names=['episode_return', 'loss'])
+
+
         if self.args.env_type == "gym" and self.args.FA == "linear":
             self.current_model = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
             self.target_model  = LinearFA(self.env.observation_space.shape[0], self.env.action_space.n, self.device)
@@ -70,25 +75,28 @@ class Double:
 
     def train(self):
 
+        #Initializations
         losses = []
-        all_rewards = []
-        episode_reward = 0
-
+        _return = 0
         state = self.env.reset()
-
         self.update_target()
-        state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
+        previous_action = None
+        no_of_episodes = 0
 
+        
+        #Getting p for this state
+        state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
         self._p = self.current_model(state_unsqueezed)
         #print("_p.shape: {}".format(self._p.shape))
 
+
+        #Loading previous saved parameters incase of resuming the experiment
         if self.start_frame > 1:
-            fr = self.load_checkpoint(self.start_frame)
-            print("==> Resuming training from frame: {}".format(self.start_frame))
+            no_of_episodes = self.load_checkpoint(self.start_frame)
+            print("==> Resuming training from frame: {}".format(self.start_frame)) 
+        
 
-        no_of_episodes = 0
-
-        for frame_idx in range(self.start_frame, self.num_frames + 1):
+        for frame_idx in range(self.start_frame+1, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.current_model.act(state, epsilon)
             p_action = self._p[0][action].detach()
@@ -97,18 +105,20 @@ class Double:
             self.replay_buffer.push(state, action, reward, next_state, done, p_action)
             
             state = next_state
-            episode_reward += reward
-            
+            _return += reward
+
+            if previous_action != None and previous_action != action:
+                self.action_count = self.action_count + 1
+
+            previous_action = action
+
             if done:
                 no_of_episodes += 1
                 #print("No of episodes ended: {}".format(no_of_episodes))
                 state = self.env.reset()
-                all_rewards.append(episode_reward)
-                episode_reward = 0
-                self.experiment.log_metric("episode_reward", all_rewards[-1], step=no_of_episodes)
-                if no_of_episodes % self.checkpoint_idx == 1:
-                    self.save_checkpoint(frame_idx)
-                self.logger.to_csv(np.array([frame_idx,all_rewards[-1]]), no_of_episodes)
+                self.episode_rewards.append(_return) 
+                _return = 0
+                previous_action = None
                 state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
                 self._p = self.current_model(state_unsqueezed)
 
@@ -116,16 +126,21 @@ class Double:
             if len(self.replay_buffer) > self.batch_size:
                 loss = self.compute_td_loss() #
                 losses.append(loss.item()) 
-                self.experiment.log_metric("loss", loss, step=frame_idx)               
+            
+            #self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx % self.plot_idx == 0:
-                plot(frame_idx, all_rewards, losses, self.log_dir, self.env_name+"_"+self.args.FA) 
-                
+                self.logger.to_csv(np.array([frame_idx, no_of_episodes , np.mean(episode_rewards), np.mean(losses)]), self.plot_idx)
+                self.LP.plotter() 
+                losses =[]
+                self.action_count = 0
+
             if frame_idx % self.target_idx == 0:
                 self.update_target()
 
-            #if frame_idx % self.checkpoint_idx == 0:
-                #self.save_checkpoint(frame_idx)
+            if frame_idx % self.checkpoint_idx == 0:
+                self.save_checkpoint(frame_idx, no_of_episodes)
+            
             
             state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
             q_value = self.current_model(state_unsqueezed)
@@ -171,10 +186,14 @@ class Double:
         eps_plot(eps_list, self.log_dir, self.env_name+"_"+self.args.FA)
 
 
-    def save_checkpoint(self, nb_frame):
+    def save_checkpoint(self, nb_frame, epi):
         w_path = '%s/checkpoint_fr_%d.tar'%(self.env_name+"_"+self.args.FA+"_weights", nb_frame)
         torch.save({
             'frames': nb_frame,
+            'epi': epi,
+            'deque': self.episode_rewards,
+            'action': self.action_count,
+            'buffer': self.replay_buffer,
             'modelc': self.current_model.state_dict(),
             'modelt': self.target_model.state_dict()
         }, os.path.join(self.log_dir, w_path))
@@ -187,10 +206,14 @@ class Double:
         print("===> Loading Checkpoint saved at {}".format(w_path))
         checkpoint = torch.load(os.path.join(self.log_dir, w_path))
         fr = checkpoint['frames']
+        epi = checkpoint['epi']
+        self.deque = checkpoint['deque']
+        self.action_count = checkpoint['action']
+        self.replay_buffer = checkpoint['buffer']
         self.current_model.load_state_dict(checkpoint['modelc'])
         self.target_model.load_state_dict(checkpoint['modelt'])
 
-        return fr
+        return epi
 
 
 
