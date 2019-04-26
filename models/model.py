@@ -35,10 +35,10 @@ class LinearFA(nn.Module):
         return action
 
 
-class DQN(nn.Module):
+class Deep(nn.Module):
     
     def __init__(self, inp_channel, out_channel, device):
-        super(DQN, self).__init__()
+        super(Deep, self).__init__()
 
         self.inp_channel = inp_channel
         self.out_channel = out_channel

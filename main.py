@@ -16,6 +16,7 @@ import torch.optim as optim
 from common.wrappers import make_atari, wrap_deepmind, wrap_pytorch
 from arguments import get_args
 from algo.double import Double
+from algo.dqn import DQN
 
 args = get_args()
 
@@ -62,7 +63,24 @@ def _main():
 
 
     if args.algo == 'dqn':
-        pass
+        #figure out directory stuff
+        _dir = os.path.join(args.log_dir, "dqn_results")
+        os.makedirs(_dir, exist_ok=True) #change this
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed)), exist_ok=True)
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+        _dir = os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+        if args.env_type == "atari":
+           env_n = args.env_name.partition("NoFrameskip")
+           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+        elif args.env_type == "gym":
+           env_n = args.env_name.partition("-")
+           os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
+        env = _env_set(args.env_name, args.env_type)
+        env.seed(args.seed) 
+        alg = DQN(args, env, env_n[0], device, experiment, _dir)
+        alg.epsilon_plot()
+        alg.train()
 
     elif args.algo == 'double':
         #figure out directory stuff
