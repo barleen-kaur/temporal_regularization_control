@@ -1,3 +1,5 @@
+This is the code for DQN experiments, to run on colab. We later used a GPU and integrated the DQN code into the double DQN branch.
+
 # temporal_regularization_control
 
 
