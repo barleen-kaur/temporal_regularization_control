@@ -1,3 +1,5 @@
+Currently we have a different branch for different learning algorithms. In the near future, we will be mergining them as we continue to work on the project.
+
 # temporal_regularization_control
 
 
