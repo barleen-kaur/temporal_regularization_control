@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import random
 import numpy as np
 from collections import deque
@@ -95,7 +96,7 @@ class Double:
             no_of_episodes = self.load_checkpoint(self.start_frame)
             print("==> Resuming training from frame: {}".format(self.start_frame)) 
         
-
+        #start_time = time.time()
         for frame_idx in range(self.start_frame+1, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.current_model.act(state, epsilon)
@@ -138,6 +139,8 @@ class Double:
                 self.experiment.log_metric("action", self.action_count, step=frame_idx)
                 losses =[]
                 self.action_count = 0
+                #print("{} frames done in {} sec".format(self.plot_idx, time.time()-start_time))
+                #start_time = time.time()
 
             if frame_idx % self.target_idx == 0:
                 self.update_target()

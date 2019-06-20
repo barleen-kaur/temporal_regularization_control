@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import random
 import numpy as np
 from collections import deque
@@ -91,7 +92,7 @@ class DQN:
             no_of_episodes = self.load_checkpoint(self.start_frame)
             print("==> Resuming training from frame: {}".format(self.start_frame)) 
         
-
+        #start_time = time.time()
         for frame_idx in range(self.start_frame+1, self.num_frames + 1):
             epsilon = self.epsilon_by_frame(frame_idx)
             action = self.model.act(state, epsilon)
@@ -125,7 +126,7 @@ class DQN:
             
             #self.experiment.log_metric("loss", loss, step=frame_idx)               
 
-            if frame_idx % self.plot_idx == 0:
+            if frame_idx  % self.plot_idx == 0:
                 #print("Frame: {}, Reward: {}, Loss: {}, action: {}".format(frame_idx, np.mean(self.episode_rewards), np.mean(losses), self.action_count))
                 self.logger.to_csv(np.array([frame_idx, no_of_episodes , np.mean(self.episode_rewards), np.mean(losses), self.action_count]), self.plot_idx)
                 self.LP.plotter() 
@@ -134,6 +135,8 @@ class DQN:
                 self.experiment.log_metric("action", self.action_count, step=frame_idx)
                 losses =[]
                 self.action_count = 0
+                #print("{} frames done in {} sec".format(self.plot_idx, time.time()-start_time))
+                #start_time = time.time()
 
             if frame_idx % self.checkpoint_idx == 0:
                 self.save_checkpoint(frame_idx, no_of_episodes)

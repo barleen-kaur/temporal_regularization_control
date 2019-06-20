@@ -59,23 +59,29 @@ def _env_set(env_name, env_type):
 
 def _main():
     
-    device = torch.device("cuda:1" if args.cuda else "cpu")
+    device = torch.device("cuda" if args.cuda else "cpu")
 
 
     if args.algo == 'dqn':
         #figure out directory stuff
         _dir = os.path.join(args.log_dir, "dqn_results")
-        os.makedirs(_dir, exist_ok=True) #change this
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-        _dir = os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
         if args.env_type == "atari":
            env_n = args.env_name.partition("NoFrameskip")
-           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+           os.makedirs(_dir, exist_ok=True) #change this
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         elif args.env_type == "gym":
            env_n = args.env_name.partition("-")
+           os.makedirs(_dir, exist_ok=True) #change this
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
+        
         env = _env_set(args.env_name, args.env_type)
         env.seed(args.seed) 
         alg = DQN(args, env, env_n[0], device, experiment, _dir)
@@ -85,17 +91,23 @@ def _main():
     elif args.algo == 'double':
         #figure out directory stuff
         _dir = os.path.join(args.log_dir, "double_results")
-        os.makedirs(_dir, exist_ok=True) #change this
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed)), exist_ok=True)
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-        os.makedirs(os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-        _dir = os.path.join(_dir,'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
         if args.env_type == "atari":
            env_n = args.env_name.partition("NoFrameskip")
-           os.makedirs(os.path.join(_dir, env_n[0]+'_weights'), exist_ok=True)
+           os.makedirs(_dir, exist_ok=True) #change this 
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         elif args.env_type == "gym":
            env_n = args.env_name.partition("-")
+           os.makedirs(_dir, exist_ok=True) #change this
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
+        
         env = _env_set(args.env_name, args.env_type)
         env.seed(args.seed) 
         alg = Double(args, env, env_n[0], device, experiment, _dir)
