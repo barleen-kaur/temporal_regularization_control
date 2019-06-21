@@ -39,6 +39,7 @@ class DQN:
         self.env = env
         self.device = device
         self.replay_buffer = ReplayBuffer(args.replay_buff)
+        self.replay_threshold = args.replay_threshold
         self.experiment =  experiment
         self.log_dir = _dir
         self.action_count = 0
@@ -120,7 +121,7 @@ class DQN:
                 self._p = self.model(state_unsqueezed)
 
                 
-            if len(self.replay_buffer) > self.batch_size:
+            if len(self.replay_buffer) > self.replay_threshold:
                 loss = self.compute_td_loss() #
                 losses.append(loss.item()) 
             

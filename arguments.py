@@ -16,6 +16,7 @@ def get_args():
     parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA training')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size(default: 32)')
     parser.add_argument('--replay_buff', type=int, default=1000, help='size of replay buffer (default: 1000)')
+    parser.add_argument('--replay_threshold', type=int, default=1000, help='size of replay buffer threshold (default: 1000)')
     parser.add_argument('--plot_idx', type=int, default=500, help='frequency with which to plot the graph')
     parser.add_argument('--target_idx', type=int, default=100, help='no of steps for updating target network')
     parser.add_argument('--checkpoint_idx', type=int, default=50000, help='checkpointing frequency in terms of no of episodes')

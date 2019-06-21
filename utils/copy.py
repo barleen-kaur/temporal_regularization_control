@@ -5,26 +5,27 @@ import argparse
 import numpy as np
 import sys
 from os import path
+from os.path import join, basename
+from shutil import copy2
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 
 
 def _get_cfg():
     parser = argparse.ArgumentParser(description="Main handler for training", usage="./data.sh --algo double --seed 1 --env_type atari --FA deep --env_name Pong --beta 0.1 --lamb 0.1")
-    parser.add_argument('--algo', default='double', help='algorithm to use: dqn | double')
-    parser.add_argument('--seed', type=int, default=1, help='random seed (default: 1)')
-    parser.add_argument('--env_type', default='gym', help='gym or atari (default: gym)')
-    parser.add_argument('--FA', default='deep', help='linear or deep (default: deep)')
-    parser.add_argument('--env_name', default='Pong', help='environment to train on (default: Pong)')
-    parser.add_argument('--beta', type=float, default=0.0, help='beta value (default: 0.0)')
-    parser.add_argument('--lamb', type=float, default=0.1, help='lambda value(default: 0.1)')
+    parser.add_argument('--algo', type=str, default='double', help='algorithm to use: dqn | double')
+    parser.add_argument('--seed', type=str, default=1, help='random seed (default: 1)')
+    parser.add_argument('--env_type', type=str, default='gym', help='gym or atari (default: gym)')
+    parser.add_argument('--FA', type=str, default='deep', help='linear or deep (default: deep)')
+    parser.add_argument('--env_name', type=str, default='Pong', help='environment to train on (default: Pong)')
+    parser.add_argument('--beta', type=str, default=0.0, help='beta value (default: 0.0)')
+    parser.add_argument('--lamb', type=str, default=0.1, help='lambda value(default: 0.1)')
+    parser.add_argument('--option', default='copy', help='operation (default: copy)')
     parser.add_argument('--log_dir', default='/scratch/barleenk/temporal/', help='directory to save agent logs (default: /tmp/gym)')
 
     args = parser.parse_args()                                            
 
     return args
 
-
-args = _get_cfg()
 
 
 ###################################################################################
@@ -75,7 +76,7 @@ class CopyResults(object):
 
                                     log_path = join(log_file, log_name)
                                     exists = os.path.isfile(log_path)
-                                    results_log_name = env+"_"+fa"_"+alg"_seed"+str(s)"_beta"+str(b)"_lamb"+str(l)+"_training.log"
+                                    results_log_name = env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_training.log"
                                     result_log_path = join(results_dir, results_log_name)
                                     if exists:
                                         copy2(log_path, result_log_path)
@@ -111,9 +112,11 @@ def _main(args):
     env_type =  convert(args.env_type, "str")
     FA = convert(args.FA, "str")
     env_name = convert(args.env_name, "str")
-    beta = convert(args.beta, "float")                                                
+    beta = convert(args.beta, "float") 
+    
     lamb = convert(args.lamb, "float")
     log_dir = args.log_dir
+
 
     if args.option == "copy":
 
