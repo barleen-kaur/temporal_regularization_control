@@ -87,7 +87,6 @@ class DQN:
         self._p = self.model(state_unsqueezed)
         #print("_p.shape: {}".format(self._p.shape))
 
-
         #Loading previous saved parameters incase of resuming the experiment
         if self.start_frame > 1:
             no_of_episodes = self.load_checkpoint(self.start_frame)
@@ -114,17 +113,19 @@ class DQN:
                 no_of_episodes += 1
                 #print("No of episodes ended: {}".format(no_of_episodes))
                 state = self.env.reset()
-                self.episode_rewards.append(_return) 
+                self.episode_rewards.append(_return)
                 _return = 0
                 previous_action = None
                 state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)
                 self._p = self.model(state_unsqueezed)
-
                 
             if len(self.replay_buffer) > self.replay_threshold:
-                loss = self.compute_td_loss() #
-                losses.append(loss.item()) 
-            
+                loss = self.compute_td_loss() 
+                losses.append(loss.item())
+                #if frame_idx%100==0:
+                #    print(frame_idx,loss)
+
+                            
             #self.experiment.log_metric("loss", loss, step=frame_idx)               
 
             if frame_idx  % self.plot_idx == 0:
@@ -159,6 +160,7 @@ class DQN:
         done       = torch.FloatTensor(done).to(self.device)
         p_action  = torch.FloatTensor(p_action).to(self.device)
         
+        #with torch.no_grad():
         next_state = torch.FloatTensor(np.float32(next_state)).to(self.device)
         #print("action: {}, shape:{}".format(action, action.shape))
         #print("done: {}, shape:{}".format(done, done.shape))
@@ -172,9 +174,9 @@ class DQN:
         #print("next_q_value :{}, shape: {}".format(next_q_value, next_q_value.shape))
         expected_q_value = reward + self.gamma *((1.0-self._beta)*(1-done)*next_q_value + self._beta*p_action)
         #print("expected_q_value: {}, shape: {}".format(expected_q_value, expected_q_value.shape))
-     
+
         loss = (q_value - expected_q_value).pow(2).mean() 
-            
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
