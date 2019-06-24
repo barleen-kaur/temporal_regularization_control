@@ -147,7 +147,9 @@ class Double:
                 self.update_target()
 
             if frame_idx % self.checkpoint_idx == 0:
+                #print("time for {} frames: {}".format(self.checkpoint_idx, time.time()-start_time))
                 self.save_checkpoint(frame_idx, no_of_episodes)
+                #start_time = time.time()
             
             
             state_unsqueezed = torch.FloatTensor(np.float32(state)).unsqueeze_(0).to(self.device)

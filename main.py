@@ -60,8 +60,9 @@ def _env_set(env_name, env_type):
 def _main():
     
     device = torch.device("cuda" if args.cuda else "cpu")
-
-
+     
+    start_time = time.time()
+   
     if args.algo == 'dqn':
         #figure out directory stuff
         _dir = os.path.join(args.log_dir, "dqn_results")
@@ -113,6 +114,7 @@ def _main():
         alg = Double(args, env, env_n[0], device, experiment, _dir)
         alg.epsilon_plot()
         alg.train()
+        print("Program execution done successfully!\n{} completed successfully in {} min".format(args.num_frames, (time.time()-start_time())/60))
     
 
 

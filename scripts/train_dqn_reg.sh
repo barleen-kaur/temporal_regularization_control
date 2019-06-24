@@ -6,7 +6,11 @@ do
 	do
 		while read -r lambda
 		do
-			sbatch dqn_reg.sh $env $beta $lambda $freq
-   		done < lambda.txt
+			while read -r lr
+            do
+				sbatch dqn_reg.sh $env $freq $beta $lambda $lr
+			done < lr.txt
+		done < lambda.txt
 	done < beta.txt
 done < env.txt
+
