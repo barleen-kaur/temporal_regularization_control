@@ -8,8 +8,8 @@
 #SBATCH --array=1-5 
 
 module load miniconda3
-source activate temporal
-cd ../temporal_regularization_control/
+source activate temporal_regularization_control
+cd temporal_regularization_control/
 
 
 PYTHONPATH=.
