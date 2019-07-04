@@ -8,7 +8,7 @@
 #SBATCH --array=1-5 
 
 module load miniconda3
-source activate temporal
+source activate temporal_regularization_control
 cd ../temporal_regularization_control/
 
 
