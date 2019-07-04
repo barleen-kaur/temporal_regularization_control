@@ -1,5 +1,6 @@
 #!/bin/bash
 IFS=","
+export num=0.1
 while read -r env freq
 do
 	while read -r beta
@@ -8,7 +9,7 @@ do
 		do
 			while read -r lr
                         do
-				if [ "$beta" == 0.0 -a "$lambda" -gt 0.1 ]; then
+				if [ "$beta" == 0.0 -a `echo "$lambda>$num"|bc` -eq 1 ]; then
 					continue
 				else
 					sbatch double_reg.sh $env $freq $beta $lambda $lr
