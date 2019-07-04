@@ -114,7 +114,7 @@ def _main():
         alg = Double(args, env, env_n[0], device, experiment, _dir)
         alg.epsilon_plot()
         alg.train()
-        print("Program execution done successfully!\n{} frames completed successfully in {} min".format(args.num_frames, (time.time()-start_time/60)))
+        print("Program execution done successfully!\n{} frames completed successfully in {} min".format(args.num_frames, (time.time()-start_time)/60))
     
 
 

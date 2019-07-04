@@ -8,8 +8,11 @@ do
 		do
 			while read -r lr
                         do
-				sbatch double_reg.sh $env $freq $beta $lambda $lr
-   		
+				if [ "$beta" == 0.0 -a "$lambda" -gt 0.1 ]; then
+					continue
+				else
+					sbatch double_reg.sh $env $freq $beta $lambda $lr
+   				fi
 			done < lr.txt
 		done < lambda.txt
 	done < beta.txt

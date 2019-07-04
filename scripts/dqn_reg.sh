@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --time=07:00:00
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 #SBATCH --ntasks=8
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --account=rpp-bengioy
 #SBATCH --array=1-5 
 
 module load miniconda3
-source activate temporal_regularization_control
-cd temporal_regularization_control/
+source activate temporal
+cd ../temporal_regularization_control/
 
 
 PYTHONPATH=.
