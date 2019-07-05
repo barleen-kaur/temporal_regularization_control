@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --time=07:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --ntasks=8
+#SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --account=rpp-bengioy
 #SBATCH --array=1-5
