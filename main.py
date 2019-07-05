@@ -69,18 +69,14 @@ def _main():
         if args.env_type == "atari":
            env_n = args.env_name.partition("NoFrameskip")
            os.makedirs(_dir, exist_ok=True) #change this
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         elif args.env_type == "gym":
            env_n = args.env_name.partition("-")
            os.makedirs(_dir, exist_ok=True) #change this
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         
         env = _env_set(args.env_name, args.env_type)
@@ -95,18 +91,14 @@ def _main():
         if args.env_type == "atari":
            env_n = args.env_name.partition("NoFrameskip")
            os.makedirs(_dir, exist_ok=True) #change this 
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         elif args.env_type == "gym":
            env_n = args.env_name.partition("-")
            os.makedirs(_dir, exist_ok=True) #change this
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta)), exist_ok=True)
-           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb)), exist_ok=True)
-           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb))
+           os.makedirs(os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr)), exist_ok=True)
+           _dir = os.path.join(_dir,env_n[0],'seed_'+str(args.seed),'beta_'+str(args.beta),'lambda_'+str(args.lamb),'lr_'+str(args.lr))
            os.makedirs(os.path.join(_dir, env_n[0]+"_"+args.FA+'_weights'), exist_ok=True)
         
         env = _env_set(args.env_name, args.env_type)
