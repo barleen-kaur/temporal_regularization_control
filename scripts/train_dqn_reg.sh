@@ -12,9 +12,9 @@ do
 				if [ "$beta" == 0.0 -a `echo "$lambda>$num"|bc` -eq 1 ]; then
 					continue
 				else
-					sbatch dqn_reg.sh $env $freq $beta $lambda $lr
+					sbatch ~/temporal_regularization_control/scripts/dqn_reg.sh $env $freq $beta $lambda $lr
    				fi
-			done < lr.txt
-		done < lambda.txt
-	done < beta.txt
-done < env.txt
+			done < ~/temporal_regularization_control/scripts/lr.txt
+		done < ~/temporal_regularization_control/scripts/lambda.txt
+	done < ~/temporal_regularization_control/scripts/beta.txt
+done < ~/temporal_regularization_control/scripts/env.txt
