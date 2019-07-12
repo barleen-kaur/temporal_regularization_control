@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --time=07:00:00
+#SBATCH --time=10:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --ntasks=3
+#SBATCH --ntasks=5
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --account=rpp-bengioy
 #SBATCH --array=1-5 
