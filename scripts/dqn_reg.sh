@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --time=10:00:00
+#SBATCH --time=12:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=5
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --account=rpp-bengioy
-#SBATCH --array=1-5 
+#SBATCH --array=1-5%1 
 
 module load miniconda3
 source activate temporal_regularization_control
