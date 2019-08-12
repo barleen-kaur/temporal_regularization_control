@@ -11,16 +11,17 @@ sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 
 
 def _get_cfg():
-    parser = argparse.ArgumentParser(description="Main handler for training", usage="./data.sh --algo double --seed 1 --env_type atari --FA deep --env_name Pong --beta 0.1 --lamb 0.1")
+    parser = argparse.ArgumentParser(description="Main handler for training", usage="./data.sh --algo double --FA deep --env_type atari --game Pong,Breakout --seed 1,2,3,4,5 --beta 0.0,0.1,0.2,0.3,0.7,1.0 --lamb 0.0,0.1,0.2,0.3,0.7,1.0 -lr 1e-3,1e-4,1e-5")
     parser.add_argument('--algo', type=str, default='double', help='algorithm to use: dqn | double')
-    parser.add_argument('--seed', type=str, default=1, help='random seed (default: 1)')
-    parser.add_argument('--env_type', type=str, default='gym', help='gym or atari (default: gym)')
+    parser.add_argument('--seed', type=str, default="1,2,3,4,5", help='random seed (default: 1,2,3,4,5)')
+    parser.add_argument('--env_type', type=str, default='atari', help='gym or atari (default: gym)')
     parser.add_argument('--FA', type=str, default='deep', help='linear or deep (default: deep)')
-    parser.add_argument('--env_name', type=str, default='Pong', help='environment to train on (default: Pong)')
-    parser.add_argument('--beta', type=str, default=0.0, help='beta value (default: 0.0)')
-    parser.add_argument('--lamb', type=str, default=0.1, help='lambda value(default: 0.1)')
+    parser.add_argument('--game', type=str, default='Pong', help='environment to train on (default: Pong)')
+    parser.add_argument('--beta', type=str, default='0.0,0.1,0.2,0.3,0.7,1.0', help='beta value (default: 0.0,0.1,0.2,0.3,0.7,1.0)')
+    parser.add_argument('--lamb', type=str, default='0.1,0.2,0.3,0.7,1.0', help='lambda value(default: 0.1,0.2,0.3,0.7,1.0)')
+    parser.add_argument('-lr', "--lr", type=str, default='1e-3,1e-4,1e-5', help='learning rate (default: 1e-3,1e-4,1e-5)', required=False)
     parser.add_argument('--option', default='copy', help='operation (default: copy)')
-    parser.add_argument('--log_dir', default='/scratch/barleenk/temporal/', help='directory to save agent logs (default: /tmp/gym)')
+    parser.add_argument('--log_dir', default='/scratch/barleenk/temporal/', help='directory to save agent logs (default: /scratch/barleenk/temporal/)')
 
     args = parser.parse_args()                                            
 
@@ -38,25 +39,22 @@ class CopyResults(object):
                 seed = [],
                 env_type = [],
                 FA = [],
-                env_name = [],
+                game = [],
                 beta = [],
                 lamb = [],
-                log_dir = "\vafaf"):
+                LRs = [],
+                log_dir = "afaf"):
 
         super(CopyResults, self).__init__()
         self.algo = algo
         self.seed = seed
         self.env_type = env_type
         self.FA = FA
-        self.env_name = env_name
+        self.game = game
         self.beta = beta
         self.lamb = lamb
+        self.LRs = LRs
         self.log_dir = log_dir
-        #self.tumor = ["Enhance", "Whole", "Core", "class_0", "class_1", "class_2"]
-        #self.tumor_class = ["en", "wh", "co", "0", "1", "2"]
-        #self.tags = ["Baseline" , "Finetune Decoder", "Finetune Last three", "Finetune All"]
-        #self.thresholds = [0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.98, 0.99, 0.999, 0.9999, 0.99999]
-        #self.roc_metrics = roc_metrics
 
     def copy_graphs(self):
 
@@ -64,27 +62,28 @@ class CopyResults(object):
         os.makedirs(results_dir, exist_ok=True)
 
         for alg in self.algo:
-            for s in self.seed:   
-                for e_type in self.env_type:
-                    for fa in self.FA:
-                        for env in self.env_name:
+            for e_type in self.env_type:
+                for fa in self.FA:
+                    for env in self.game:
+                        for s in self.seed:
                             for b in self.beta:
-                                for l in self.lamb:
-                                    
-                                    log_file = join(self.log_dir, alg+"_results", env, "seed_"+str(s), "beta_"+str(b), "lambda_"+str(l)) 
-                                    log_name = env+"_"+fa+"_training.log" 
+                                if b > 0.0:
+                                   for l in self.lamb:
+                                       for lr in self.LRs: 
+                                           log_file_path = join(self.log_dir, alg+"_results", env, "seed_"+str(s), "beta_"+str(b), "lambda_"+str(l),"lr_"+str(lr),env+"_"+fa+"_training.log")      
+                                           result_log_path = join(results_dir, env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_lr"+str(lr)+"_training.log")
+                                           if os.path.isfile(log_file_path):
+                                              copy2(log_file_path, result_log_path)
 
-                                    log_path = join(log_file, log_name)
-                                    exists = os.path.isfile(log_path)
-                                    results_log_name = env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_training.log"
-                                    result_log_path = join(results_dir, results_log_name)
-                                    if exists:
-                                        copy2(log_path, result_log_path)
-
-                                    else:
-                                        print("{} not found!".format(log_path))
-
-
+                                           else:
+                                              print("{} not found!".format(log_file_path))
+                                else:
+                                   l = self.lamb[0]
+                                   for lr in self.LRs:
+                                       log_file_path = join(self.log_dir, alg+"_results", env, "seed_"+str(s), "beta_"+str(b), "lambda_"+str(l),"lr_"+str(lr),env+"_"+fa+"_training.log")  
+                                       result_log_path = join(results_dir, env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_lr"+str(lr)+"_training.log")
+                                       if os.path.isfile(log_file_path):                                                                                                                  copy2(log_file_path, result_log_path)
+                                       else:                                                                                                                                              print("{} not found!".format(log_file_path))
 
 
 ###################################################################################
@@ -111,10 +110,10 @@ def _main(args):
     seed = convert(args.seed, "int")
     env_type =  convert(args.env_type, "str")
     FA = convert(args.FA, "str")
-    env_name = convert(args.env_name, "str")
+    game = convert(args.game, "str")
     beta = convert(args.beta, "float") 
-    
     lamb = convert(args.lamb, "float")
+    LRs = convert(args.lr, "float")
     log_dir = args.log_dir
 
 
@@ -124,9 +123,10 @@ def _main(args):
                         seed = seed,
                         env_type = env_type,
                         FA = FA,
-                        env_name = env_name,
+                        game = game,
                         beta = beta,
                         lamb = lamb,
+                        LRs = LRs,
                         log_dir = log_dir)
         ob.copy_graphs()
 
