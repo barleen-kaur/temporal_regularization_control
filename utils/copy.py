@@ -11,7 +11,7 @@ sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 
 
 def _get_cfg():
-    parser = argparse.ArgumentParser(description="Main handler for training", usage="./data.sh --algo double --FA deep --env_type atari --game Pong,Breakout --seed 1,2,3,4,5 --beta 0.0,0.1,0.2,0.3,0.7,1.0 --lamb 0.0,0.1,0.2,0.3,0.7,1.0 -lr 1e-3,1e-4,1e-5")
+    parser = argparse.ArgumentParser(description="Main handler for training", usage="./data.sh --algo double --FA deep --env_type atari --game Pong,Breakout --seed 1,2,3,4,5 --beta 0.0,0.1,0.2,0.3,0.7,1.0 --lamb 0.1,0.2,0.3,0.7,1.0 -lr 1e-3,1e-4,1e-5")
     parser.add_argument('--algo', type=str, default='double', help='algorithm to use: dqn | double')
     parser.add_argument('--seed', type=str, default="1,2,3,4,5", help='random seed (default: 1,2,3,4,5)')
     parser.add_argument('--env_type', type=str, default='atari', help='gym or atari (default: gym)')

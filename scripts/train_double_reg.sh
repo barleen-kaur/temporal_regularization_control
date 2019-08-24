@@ -1,20 +1,9 @@
 #!/bin/bash
 IFS=","
-export num=0.1
-while read -r env freq
+while read -r env freq frames
 do
-	while read -r beta
+	while read -r beta lambda lr
 	do
-		while read -r lambda
-		do
-			while read -r lr
-                        do
-				if [ "$beta" == 0.0 -a `echo "$lambda>$num"|bc` -eq 1 ]; then
-					continue
-				else
-					sbatch double_reg.sh $env $freq $beta $lambda $lr
-   				fi
-			done < lr.txt
-		done < lambda.txt
-	done < beta.txt
+		sbatch double_reg.sh $env $freq $frames $beta $lambda $lr
+	done < hyp.txt
 done < env.txt
