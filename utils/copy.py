@@ -20,7 +20,7 @@ def _get_cfg():
     parser.add_argument('--beta', type=str, default='0.0,0.1,0.2,0.3,0.7,1.0', help='beta value (default: 0.0,0.1,0.2,0.3,0.7,1.0)')
     parser.add_argument('--lamb', type=str, default='0.1,0.2,0.3,0.7,1.0', help='lambda value(default: 0.1,0.2,0.3,0.7,1.0)')
     parser.add_argument('-lr', "--lr", type=str, default='1e-3,1e-4,1e-5', help='learning rate (default: 1e-3,1e-4,1e-5)', required=False)
-    parser.add_argument('--option', default='copy', help='operation (default: copy)')
+    parser.add_argument('--option', default='all', help='operation (default: all)')
     parser.add_argument('--log_dir', default='/scratch/barleenk/temporal/', help='directory to save agent logs (default: /scratch/barleenk/temporal/)')
 
     args = parser.parse_args()                                            
@@ -82,8 +82,58 @@ class CopyResults(object):
                                    for lr in self.LRs:
                                        log_file_path = join(self.log_dir, alg+"_results", env, "seed_"+str(s), "beta_"+str(b), "lambda_"+str(l),"lr_"+str(lr),env+"_"+fa+"_training.log")  
                                        result_log_path = join(results_dir, env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_lr"+str(lr)+"_training.log")
-                                       if os.path.isfile(log_file_path):                                                                                                                  copy2(log_file_path, result_log_path)
-                                       else:                                                                                                                                              print("{} not found!".format(log_file_path))
+                                       if os.path.isfile(log_file_path):                                                                                                                  
+                                           copy2(log_file_path, result_log_path)
+                                       else:                                                                                                                                              
+                                           print("{} not found!".format(log_file_path))
+
+
+
+
+
+class CopyResultsBestHyp(object):
+
+    def __init__(self, config = "config",
+                algo = [],
+                seed = [],
+                env_type = [],
+                FA = [],
+                game = [],
+                beta = [],
+                lamb = [],
+                LRs = [],
+                log_dir = "afaf"):
+
+        super(CopyResultsBestHyp, self).__init__()
+        self.algo = algo
+        self.seed = seed
+        self.env_type = env_type
+        self.FA = FA
+        self.game = game
+        self.beta = beta
+        self.lamb = lamb
+        self.LRs = LRs
+        self.log_dir = log_dir
+
+    def copy_graphs(self):
+
+        results_dir = join(self.log_dir, "results") 
+        os.makedirs(results_dir, exist_ok=True)
+
+        for alg in self.algo:
+            for e_type in self.env_type:
+                for fa in self.FA:
+                    for env in self.game:
+                        for s in self.seed:
+                            for b,l,lr in zip(self.beta, self.lamb, self.LRs):
+                                log_file_path = join(self.log_dir, alg+"_results", env, "seed_"+str(s), "beta_"+str(b), "lambda_"+str(l),"lr_"+str(lr),env+"_"+fa+"_training.log")      
+                                result_log_path = join(results_dir, env+"_"+fa+"_"+alg+"_seed"+str(s)+"_beta"+str(b)+"_lamb"+str(l)+"_lr"+str(lr)+"_training.log")
+                                if os.path.isfile(log_file_path):
+                                    copy2(log_file_path, result_log_path)
+
+                                else:
+                                    print("{} not found!".format(log_file_path))
+                                
 
 
 ###################################################################################
@@ -117,9 +167,23 @@ def _main(args):
     log_dir = args.log_dir
 
 
-    if args.option == "copy":
+    if args.option == "all":
 
         ob = CopyResults(algo = algo,
+                        seed = seed,
+                        env_type = env_type,
+                        FA = FA,
+                        game = game,
+                        beta = beta,
+                        lamb = lamb,
+                        LRs = LRs,
+                        log_dir = log_dir)
+        ob.copy_graphs()
+
+
+    elif args.option == "best":
+
+        ob = CopyResultsBestHyp(algo = algo,
                         seed = seed,
                         env_type = env_type,
                         FA = FA,
